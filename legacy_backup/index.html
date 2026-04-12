@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>CoBuy</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Google Font -->
+    <!-- <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet"> -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- External CSS -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+    <nav id="navbar">
+        <div class="logo"><a href="#hero"
+                onclick="window.scrollTo({ top: 0, behavior: 'smooth' }); return false;">CoBuy</a></div>
+        <div class="nav-links">
+            <a href="#hero" onclick="window.scrollTo({ top: 0, behavior: 'smooth' }); return false;">Home</a>
+            <a href="#features">Features</a>
+            <a href="#about">About</a>
+            <a href="#contact">Contacts</a>
+            <a href="#faq">FAQs</a>
+        </div>
+    </nav>
+
+    <!-- HERO (Home) -->
+    <section class="hero" id="hero">
+        <canvas id="networkCanvas" class="hero-canvas-bg"></canvas>
+        <div class="hero-container">
+            <div class="hero-text">
+                <div class="hero-badge">Advanced Market Basket Analysis</div>
+                <h1 class="hero-title">Stop Guessing,<br>Start Growing.</h1>
+                <p class="hero-subtitle">
+                    Transform raw transaction data into actionable consumer insights. Uncover<br>hidden purchasing
+                    patterns, optimize inventory, and boost sales with our<br>advanced data mining algorithm.
+                </p>
+                <div class="hero-buttons">
+                    <a href="react-app/dist/index.html" class="btn btn-primary">Get Started Now <i
+                            class="fas fa-arrow-right"></i></a>
+                    <a href="react-app/dist/index.html" class="btn btn-dark-flat">Login to Dashboard</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section class="features" id="features"
+        style="padding-top: 140px; padding-bottom: 100px; padding-left: 5%; padding-right: 5%; text-align: center; background: #0b1120;">
+        <p
+            style="color: #64748b; font-size: 1.05rem; max-width: 800px; margin: 0 auto 60px auto; position: relative; z-index: 10;">
+            Discover the powerful tools CoBuy provides to help you understand your customers, optimize your inventory,
+            and build smarter sales strategies.
+        </p>
+
+        <div class="feature-grid"
+            style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px; max-width: 1200px; margin: 0 auto; position: relative; z-index: 10;">
+            <div class="feature-card"
+                style="background: #222b3c; border: 1px solid #2e3a50; border-radius: 12px; padding: 40px 32px; text-align: left; min-height: 320px; position: relative; z-index: 10;">
+                <div class="feature-icon-wrapper" style="margin-bottom: 24px;">
+                    <div class="feature-icon"
+                        style="background: rgba(16, 185, 129, 0.1); color: #10b981; border-color: transparent; width: 40px; height: 40px; border-radius: 10px;">
+                        <i class="fas fa-chart-pie"></i>
+                    </div>
+                </div>
+                <h3 style="font-size: 20px; margin: 0 0 16px 0; color: #fff; font-weight: bold;">Best-Seller Analytics
+                </h3>
+                <p style="color: #94a3b8; font-size: 15px; line-height: 1.6;">Instantly see your most popular products
+                    at a glance,
+                    so you always know what your customers are looking for and can keep your best inventory in stock.
+                </p>
+            </div>
+
+            <div class="feature-card"
+                style="background: #222b3c; border: 1px solid #2e3a50; border-radius: 12px; padding: 40px 32px; text-align: left; min-height: 320px; position: relative; z-index: 10;">
+                <div class="feature-icon-wrapper" style="margin-bottom: 24px;">
+                    <div class="feature-icon"
+                        style="background: rgba(16, 185, 129, 0.1); color: #10b981; border-color: transparent; width: 40px; height: 40px; border-radius: 10px;">
+                        <i class="fas fa-project-diagram"></i>
+                    </div>
+                </div>
+                <h3 style="font-size: 20px; margin: 0 0 16px 0; color: #fff; font-weight: bold;">Shopping Habit Analysis
+                </h3>
+                <p style="color: #94a3b8; font-size: 15px; line-height: 1.6;">Our system automatically finds which items
+                    are usually bought together,
+                    allowing you to create perfect product bundles and smarter store layouts without the guesswork.</p>
+            </div>
+
+            <div class="feature-card"
+                style="background: #222b3c; border: 1px solid #2e3a50; border-radius: 12px; padding: 40px 32px; text-align: left; min-height: 320px; position: relative; z-index: 10;">
+                <div class="feature-icon-wrapper" style="margin-bottom: 24px;">
+                    <div class="feature-icon"
+                        style="background: rgba(16, 185, 129, 0.1); color: #10b981; border-color: transparent; width: 40px; height: 40px; border-radius: 10px;">
+                        <i class="fas fa-history"></i>
+                    </div>
+                </div>
+                <h3 style="font-size: 20px; margin: 0 0 16px 0; color: #fff; font-weight: bold;">Smart History Records
+                </h3>
+                <p style="color: #94a3b8; font-size: 15px; line-height: 1.6;">Access a complete, organized digital
+                    history of every transaction to
+                    track your business growth and review past performance anytime.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ABOUT -->
+    <section class="about" id="about" style="padding: 100px 8%; text-align: center; background: #0b1120;">
+        <h2 style="font-size: 36px; font-weight: 800;">About</h2>
+        <p
+            style="margin-top: 30px; font-size: 1.05rem; line-height: 1.8; max-width: 850px; margin: 30px auto 0; color: #f1f5f9;">
+            Our system leverages advanced Market Basket Analysis to transform raw transactional data into actionable
+            consumer insights. By identifying deep-seated purchasing patterns across your inventory, the engine uncovers
+            natural product affinities that drive customer behavior. This allows for the creation of smarter,
+            data-backed cross-selling strategies and highly personalized shopping experiences.
+        </p>
+    </section>
+
+    <!-- CONTACTS -->
+    <section class="contact" id="contact" style="background: #0b1120; padding: 100px 8%; text-align: center;">
+        <h2 style="font-size: 36px; font-weight: 800;">Contacts</h2>
+        <p style="margin-top: 12px; color: #64748b; font-size: 1rem; margin-bottom: 40px;">
+            Connect with us on our platforms.
+        </p>
+        <ul class="social-links"
+            style="margin: 0; display: flex; justify-content: center; gap: 20px; list-style: none; padding: 0;">
+            <li><a href="#" style="color: #94a3b8; font-size: 24px; transition: color 0.2s;"><i
+                        class="fab fa-twitter"></i></a></li>
+            <li><a href="#" style="color: #94a3b8; font-size: 24px; transition: color 0.2s;"><i
+                        class="fab fa-github"></i></a></li>
+            <li><a href="#" style="color: #94a3b8; font-size: 24px; transition: color 0.2s;"><i
+                        class="fab fa-linkedin"></i></a></li>
+        </ul>
+    </section>
+
+    <!-- FAQ -->
+    <section class="help" id="faq" style="background: #0b1120; padding: 80px 8%; text-align: center;">
+        <h2 style="font-size: 36px; font-weight: 800;">FAQs</h2>
+        <p style="margin-top: 12px; color: #64748b; font-size: 1rem;">Find answers to common questions about CoBuy's
+            Market Basket Analysis and how to get started.</p>
+
+        <div class="accordion" style="max-width: 800px; margin: 40px auto 0;">
+            <details class="accordion-item"
+                style="background: #1c2438; border: 1px solid #2e3a50; border-radius: 8px; margin-bottom: 12px; text-align: left;">
+                <summary
+                    style="padding: 20px; font-weight: 600; color: #f1f5f9; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+                    What is Market Basket Analysis?
+                    <i class="fas fa-chevron-down" style="font-size: 12px; color: #64748b;"></i>
+                </summary>
+                <div class="accordion-content"
+                    style="padding: 0 20px 20px 20px; color: #94a3b8; font-size: 14px; line-height: 1.6;">
+                    <p>Market Basket Analysis is a data mining technique used by retailers to understand the purchase
+                        behavior of customers. It discovers hidden patterns in customer purchases, finding associations
+                        between
+                        different items that customers place in their "shopping basket".</p>
+                </div>
+            </details>
+
+            <details class="accordion-item"
+                style="background: #1c2438; border: 1px solid #2e3a50; border-radius: 8px; margin-bottom: 12px; text-align: left;">
+                <summary
+                    style="padding: 20px; font-weight: 600; color: #f1f5f9; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+                    How do I integrate my transaction data?
+                    <i class="fas fa-chevron-down" style="font-size: 12px; color: #64748b;"></i>
+                </summary>
+                <div class="accordion-content"
+                    style="padding: 0 20px 20px 20px; color: #94a3b8; font-size: 14px; line-height: 1.6;">
+                    <p>Simply upload your CSV or Excel files through our intuitive Mining interface. The system
+                        automatically handles parsing, giving you instant access to advanced pattern detection without
+                        complex integrations.</p>
+                </div>
+            </details>
+
+            <details class="accordion-item"
+                style="background: #1c2438; border: 1px solid #2e3a50; border-radius: 8px; margin-bottom: 12px; text-align: left;">
+                <summary
+                    style="padding: 20px; font-weight: 600; color: #f1f5f9; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+                    Is my business data secure?
+                    <i class="fas fa-chevron-down" style="font-size: 12px; color: #64748b;"></i>
+                </summary>
+                <div class="accordion-content"
+                    style="padding: 0 20px 20px 20px; color: #94a3b8; font-size: 14px; line-height: 1.6;">
+                    <p>Yes, your data security is our top priority. All processing is done securely, and your raw
+                        transaction data never leaves your browser once uploaded for processing in the local client
+                        environment.</p>
+                </div>
+            </details>
+
+            <details class="accordion-item"
+                style="background: #1c2438; border: 1px solid #2e3a50; border-radius: 8px; margin-bottom: 12px; text-align: left;">
+                <summary
+                    style="padding: 20px; font-weight: 600; color: #f1f5f9; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+                    How long does it take to see results?
+                    <i class="fas fa-chevron-down" style="font-size: 12px; color: #64748b;"></i>
+                </summary>
+                <div class="accordion-content"
+                    style="padding: 0 20px 20px 20px; color: #94a3b8; font-size: 14px; line-height: 1.6;">
+                    <p>The FP-Growth algorithm runs in milliseconds. As soon as you upload your dataset and click
+                        generate, the interactive dashboards, rules, and network graphs are instantly available for
+                        analysis.</p>
+                </div>
+            </details>
+        </div>
+    </section>
+
+    <!-- External Script for Hero Network Animation -->
+    <script src="network-animation.js"></script>
+</body>
+
+</html>

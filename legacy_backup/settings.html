@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>CoBuy - Settings</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+
+<body>
+    <div class="dashboard">
+        <!-- SIDEBAR -->
+        <aside class="sidebar" style="position: relative; z-index: 10;">
+            <div class="logo">CoBuy</div>
+            <ul class="menu">
+                <li onclick="window.location.href='dashboard.html'" style="cursor: pointer;">Dashboard</li>
+                <li onclick="window.location.href='analytics.html'" style="cursor: pointer;">Analytics</li>
+                <li onclick="toggleHelpPanel()" style="cursor: pointer;">Help</li>
+                <li class="active">Setting</li>
+                <li onclick="window.location.href='mining.html'" style="cursor: pointer;">Use Mining Features</li>
+            </ul>
+            <ul class="bottom-menu">
+                <li>User</li>
+                <li onclick="logout()">Logout</li>
+            </ul>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main" style="position: relative; z-index: 10;">
+            <!-- TOPBAR -->
+            <div class="topbar">
+                <div>
+                    <h3>Preferences</h3>
+                    <span>Algorithm Logic & Appearance</span>
+                </div>
+            </div>
+
+            <!-- SETTINGS CONTENT -->
+            <div class="dashboard-grid" style="margin-top: 20px;">
+
+                <!-- Algorithm Control Card -->
+                <div class="card glass-card">
+                    <div class="card-header"
+                        style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; margin-bottom: 20px;">
+                        <h4><i class="fas fa-microchip" style="color: var(--neon-cyan); margin-right: 8px;"></i>
+                            Mathematical Constraints</h4>
+                    </div>
+
+                    <div class="setting-group" style="margin-bottom: 30px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <label style="color: #fff; font-weight: 500;">Minimum Support Threshold</label>
+                            <span id="supportVal" style="color: var(--neon-cyan); font-weight: 600;">5%</span>
+                        </div>
+                        <p style="color: rgba(255,255,255,0.5); font-size: 0.85rem; margin-bottom: 15px;">How frequently
+                            an item must be bought overall to even be considered. (Higher = ignore rare items).</p>
+                        <input type="range" id="minSupportSlider" class="glass-slider" min="1" max="20" value="5">
+                    </div>
+
+                    <div class="setting-group" style="margin-bottom: 30px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <label style="color: #fff; font-weight: 500;">Minimum Confidence</label>
+                            <span id="confidenceVal" style="color: var(--neon-cyan); font-weight: 600;">20%</span>
+                        </div>
+                        <p style="color: rgba(255,255,255,0.5); font-size: 0.85rem; margin-bottom: 15px;">The minimum
+                            probability required to link two items together. (E.g. If 100 people buy A, at least 20 must
+                            buy B).</p>
+                        <input type="range" id="minConfidenceSlider" class="glass-slider" min="5" max="80" value="20"
+                            step="5">
+                    </div>
+
+                    <div
+                        style="margin-top: 20px; padding: 15px; background: rgba(0, 242, 254, 0.05); border: 1px solid rgba(0, 242, 254, 0.2); border-radius: 8px;">
+                        <i class="fas fa-info-circle" style="color: var(--neon-cyan); margin-right: 5px;"></i>
+                        <span style="color: rgba(255,255,255,0.8); font-size: 0.85rem;">Lowering thresholds drastically
+                            increases computation time but finds obscure patterns.</span>
+                    </div>
+
+                    <button class="btn-action" style="margin-top: 20px; width: 100%; border: none;"
+                        onclick="saveAlgorithmSettings()">
+                        <i class="fas fa-save"></i> Save Engine Configurations
+                    </button>
+                </div>
+
+                <!-- Appearance Control Card -->
+                <div class="card glass-card">
+                    <div class="card-header"
+                        style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; margin-bottom: 20px;">
+                        <h4><i class="fas fa-paint-brush" style="color: var(--neon-cyan); margin-right: 8px;"></i>
+                            Atmosphere Theme</h4>
+                    </div>
+
+                    <div class="setting-group" style="margin-bottom: 30px;">
+                        <label style="color: #fff; font-weight: 500; display: block; margin-bottom: 15px;">Primary Glow
+                            Color</label>
+                        <div class="theme-swatches" style="display: flex; gap: 15px;">
+                            <!-- Cyan/Blue Default -->
+                            <div class="swatch active" data-color="cyan"
+                                style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #00f2fe, #4facfe); border: 2px solid #fff; cursor: pointer; box-shadow: 0 0 15px rgba(0, 242, 254, 0.5);">
+                            </div>
+                            <!-- Neon Purple -->
+                            <div class="swatch" data-color="purple"
+                                style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #d53369, #daae51); border: 2px solid transparent; cursor: pointer;">
+                            </div>
+                            <!-- Toxic Green -->
+                            <div class="swatch" data-color="green"
+                                style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #0ba360, #3cba92); border: 2px solid transparent; cursor: pointer;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="setting-group"
+                        style="margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <label style="color: #fff; font-weight: 500;">WebGL Physics Rendering</label>
+                            <p style="color: rgba(255,255,255,0.5); font-size: 0.85rem; margin-top: 5px;">Disable graph
+                                animations to save CPU battery.</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="physicsToggle" checked>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- HELP SLIDE-OUT PANEL (Shared) -->
+    <div class="help-overlay" id="helpOverlay" onclick="toggleHelpPanel()"></div>
+    <div class="help-panel" id="helpPanel">
+        <div class="help-header">
+            <h2><i class="fas fa-question-circle" style="margin-right: 10px; color: var(--neon-cyan);"></i> Help Center
+            </h2>
+            <button class="close-btn" onclick="toggleHelpPanel()">&times;</button>
+        </div>
+        <div class="help-content">
+            <div class="help-section">
+                <h3>Settings Explained</h3>
+                <p style="margin-top: 10px; color: rgba(255,255,255,0.8); line-height: 1.6;">
+                    If the system is generating odd connections like <strong>"Shampoo & Bread"</strong>, you need to
+                    raise the <strong>Minimum Confidence</strong>. It means the system is triggering on rare, accidental
+                    co-purchases because the data net is cast too wide.
+                </p>
+            </div>
+        </div>
+    </div>
+    <script>
+        function toggleHelpPanel() {
+            document.getElementById('helpPanel').classList.toggle('active');
+            document.getElementById('helpOverlay').classList.toggle('active');
+        }
+    </script>
+    <script src="javascript/settings-logic.js"></script>
+    <script src="javascript/theme-manager.js"></script>
+</body>
+
+</html>

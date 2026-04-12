@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>CoBuy Analytics - The Ecosystem</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="dashboard.css">
+    <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+</head>
+
+<body>
+    <div class="dashboard">
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="logo">CoBuy</div>
+            <ul class="menu">
+                <li onclick="window.location.href='dashboard.html'" style="cursor: pointer;">Dashboard</li>
+                <li class="active">Analytics</li>
+                <li onclick="toggleHelpPanel()" style="cursor: pointer;">Help</li>
+                <li>Setting</li>
+                <li onclick="window.location.href='mining.html'" style="cursor: pointer;">Use Mining Features</li>
+            </ul>
+            <ul class="bottom-menu">
+                <li>User</li>
+                <li onclick="logout()">Logout</li>
+            </ul>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main">
+            <!-- TOPBAR -->
+            <div class="topbar">
+                <div>
+                    <h3>Analytics</h3>
+                    <span>The "Why" Behind the Patterns</span>
+                </div>
+            </div>
+
+            <!-- ANALYTICS CONTENT -->
+            <div class="analytics-layout">
+
+                <!-- Main Graph Area -->
+                <div class="card glass-card network-panel">
+                    <div class="card-header">
+                        <h4><i class="fas fa-project-diagram" style="color: #00f2fe; margin-right:8px;"></i> Market
+                            Basket Ecosystem</h4>
+                        <span style="font-size: 0.8rem; color: rgba(255,255,255,0.6);">Interactive WebGL Graph</span>
+                    </div>
+                    <div class="card-body" style="padding: 0;">
+                        <!-- VIS.JS CONTAINER -->
+                        <div id="analyticsNetwork"></div>
+                    </div>
+                </div>
+
+                <!-- Side Info Panel -->
+                <div class="card glass-card details-panel">
+                    <div class="card-header">
+                        <h4>Node Explorer</h4>
+                    </div>
+                    <div class="card-body" id="nodeDetailsContent">
+                        <div class="empty-state">
+                            <i class="fas fa-mouse-pointer"
+                                style="font-size: 2rem; color: rgba(255,255,255,0.2); margin-bottom: 15px;"></i>
+                            <p style="color: rgba(255,255,255,0.6); text-align: center;">Click any glowing node on the
+                                graph to see its direct ecosystem connections.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- HELP SLIDE-OUT PANEL (Shared) -->
+    <div class="help-overlay" id="helpOverlay" onclick="toggleHelpPanel()"></div>
+    <div class="help-panel" id="helpPanel">
+        <div class="help-header">
+            <h2><i class="fas fa-question-circle" style="margin-right: 10px; color: #00f2fe;"></i> Help Center</h2>
+            <button class="close-btn" onclick="toggleHelpPanel()">&times;</button>
+        </div>
+        <div class="help-content">
+            <div class="help-section">
+                <h3><i class="fas fa-project-diagram"></i> The Graphic Ecosystem</h3>
+                <ol style="margin-top: 10px; padding-left: 20px; color: rgba(255,255,255,0.8); line-height: 1.6;">
+                    <li>Every dot (<strong>Node</strong>) represents a unique product.</li>
+                    <li>Every line (<strong>Edge</strong>) connecting two dots means those products are bought together.
+                    </li>
+                    <li>The <strong>thickness</strong> of the line represents how strong the relationship is
+                        (Confidence).</li>
+                </ol>
+            </div>
+            <div class="help-section">
+                <h3><i class="fas fa-hand-pointer" style="color: #00f2fe;"></i> Interaction</h3>
+                <p style="margin-top: 10px; color: rgba(255,255,255,0.8); line-height: 1.6;">
+                    Click and drag items to pull the web apart. Click a specific item to view exactly <em>why</em> it is
+                    connected to the ecosystem in the Node Explorer!
+                </p>
+            </div>
+        </div>
+    </div>
+    <script>
+        function toggleHelpPanel() {
+            document.getElementById('helpPanel').classList.toggle('active');
+            document.getElementById('helpOverlay').classList.toggle('active');
+        }
+    </script>
+    <script src="javascript/analytics-logic.js"></script>
+</body>
+
+</html>

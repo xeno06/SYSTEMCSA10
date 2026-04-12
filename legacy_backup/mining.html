@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>CoBuy - Mining Features</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="dashboard.css">
+    <link rel="stylesheet" href="mining.css">
+</head>
+
+<body>
+
+    <div class="dashboard">
+
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="logo">CoBuy</div>
+
+            <ul class="menu">
+                <li onclick="window.location.href='dashboard.html'" style="cursor: pointer;">Dashboard</li>
+                <li onclick="window.location.href='analytics.html'" style="cursor: pointer;">Analytics</li>
+                <li onclick="toggleHelpPanel()" style="cursor: pointer;">Help</li>
+                <li onclick="window.location.href='settings.html'" style="cursor: pointer;">Setting</li>
+                <li class="active">Use Mining Features</li>
+            </ul>
+
+            <ul class="bottom-menu">
+                <li>User</li>
+                <li onclick="logout()" style="cursor: pointer;">Logout</li>
+            </ul>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main">
+
+            <!-- TOPBAR -->
+            <div class="topbar">
+                <div>
+                    <h3>Market Basket Analysis</h3>
+                    <span id="currentDate"></span>
+                </div>
+
+                <div class="top-actions">
+                    <input type="text" placeholder="Search">
+                </div>
+            </div>
+
+            <!-- MINING CONTROLS -->
+            <div class="mining-container" style="justify-content: center;">
+                <div class="mining-card import-card" style="max-width: 600px; text-align: center;">
+                    <h4>Data Import & Analysis</h4>
+                    <p>Upload your <strong>one-month sales transaction data</strong> (.csv, .xls, .xlsx) to handle big
+                        data. We will automatically run Apriori &
+                        FP-Growth algorithms to discover hidden patterns.</p>
+                    <div class="file-upload-wrapper"
+                        style="justify-content: center; margin-top: 20px; margin-bottom: 20px;">
+                        <input type="file" id="dataFile"
+                            accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel">
+                        <label for="dataFile" class="file-btn">Choose File</label>
+                        <span id="fileName" class="file-name">No file chosen</span>
+                    </div>
+                    <button class="primary-btn pulse" id="runBtn" onclick="runAnalysis()">Generate Insights</button>
+                    <div id="execTime" style="margin-top: 15px; font-size: 0.95rem; font-weight: 500; color: #2ecc71;">
+                    </div>
+                    <div id="loader" class="loader hidden"></div>
+                </div>
+            </div>
+
+            <!-- RESULTS TABLE (MOST SOLD) -->
+            <div class="table-container hidden" id="topProductsContainer" style="margin-bottom: 30px;">
+                <div class="table-header" style="flex-direction: column; align-items: flex-start;">
+                    <h4 style="font-size: 1.2rem; margin-bottom: 8px;">Part 1: Your Best Sellers (Most Sold)</h4>
+                    <p style="color: #555; font-size: 0.95rem; margin-bottom: 15px;">This is the "Top Hits" list. It
+                        tells you which individual items are moving off the shelves the fastest.</p>
+                </div>
+                <div style="max-height: 400px; overflow-y: auto; border: 1px solid #eee; border-radius: 8px;">
+                    <table style="margin-top: 0; margin-bottom: 0;">
+                        <thead style="position: sticky; top: 0; background-color: #f9fafc; z-index: 1;">
+                            <tr>
+                                <th style="text-align: left;">Rank</th>
+                                <th style="text-align: left;">Product Name</th>
+                                <th style="text-align: left;">Total Sold</th>
+                                <th style="text-align: left;">Popularity</th>
+                            </tr>
+                        </thead>
+                        <tbody id="topProductsBody">
+                            <!-- Filled by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- RESULTS TABLE (RECOMMENDATIONS) -->
+            <div class="table-container hidden" id="resultsContainer" style="margin-bottom: 30px; position: relative;">
+                <button class="export-btn" onclick="exportResults()"
+                    style="position: absolute; right: 20px; top: 20px; z-index: 10;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round"
+                        style="margin-right: 5px; vertical-align: bottom;">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    Export Excel
+                </button>
+                <div class="table-header"
+                    style="flex-direction: column; align-items: flex-start; border-bottom: none; padding-bottom: 0;">
+                    <h4 style="font-size: 1.2rem; margin-bottom: 8px;">Part 2: The "Perfect Pairs" (Sold Together)</h4>
+                    <p style="color: #555; font-size: 0.95rem; margin-bottom: 15px; max-width: 80%;">This is where the
+                        <strong>Market Basket Analysis</strong> actually works. Instead of showing prices or IDs, it
+                        only shows real product combinations.
+                    </p>
+                </div>
+
+                <div style="max-height: 400px; overflow-y: auto; border: 1px solid #eee; border-radius: 8px;">
+                    <table style="margin-top: 0; margin-bottom: 0;">
+                        <thead style="position: sticky; top: 0; background-color: #f9fafc; z-index: 1;">
+                            <tr>
+                                <th style="text-align: left;">If they buy...</th>
+                                <th style="text-align: left;">They almost always buy...</th>
+                                <th style="text-align: left;">How often they "match"</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultsBody">
+                            <!-- Filled by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- RECOMMENDATION ADVICE -->
+            <div class="table-container hidden" id="adviceContainer" style="margin-bottom: 30px;">
+                <div class="table-header"
+                    style="flex-direction: column; align-items: flex-start; border-bottom: none; padding-bottom: 0;">
+                    <h4 style="font-size: 1.2rem; margin-bottom: 8px;">3. The "Missing Link" (The Lost Sales)</h4>
+                    <p style="color: #555; font-size: 0.95rem; margin-bottom: 15px;">This is the most important part. It
+                        shows you where a customer bought one item but <strong>forgot</strong> (or went somewhere else)
+                        to buy the matching item.</p>
+                </div>
+                <div id="adviceBody"
+                    style="padding: 15px 20px 20px 20px; color: #333; font-size: 0.95rem; line-height: 1.6; max-height: 400px; overflow-y: auto; border-top: 1px solid #eee; border-bottom: 1px solid #eee;">
+                    <!-- Filled by JS -->
+                </div>
+            </div>
+
+        </main>
+
+    </div>
+
+    <!-- SheetJS CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="mining.js"></script>
+    <script src="javascript/theme-manager.js"></script>
+    <script>
+        function logout() {
+            window.location.href = "auth.html";
+        }
+        document.getElementById('currentDate').innerText = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+    </script>
+</body>
+
+</html>

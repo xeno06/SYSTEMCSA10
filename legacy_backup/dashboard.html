@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>CoBuy Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="dashboard.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+    <div class="dashboard">
+
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="logo">CoBuy</div>
+
+            <ul class="menu">
+                <li class="active">Dashboard</li>
+                <li onclick="window.location.href='analytics.html'" style="cursor: pointer;">Analytics</li>
+                <li onclick="toggleHelpPanel()" style="cursor: pointer;">Help</li>
+                <li onclick="window.location.href='settings.html'" style="cursor: pointer;">Setting</li>
+                <li onclick="window.location.href='mining.html'">Use Mining Features</li>
+            </ul>
+
+            <ul class="bottom-menu">
+                <li>User</li>
+                <li onclick="logout()">Logout</li>
+            </ul>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main">
+
+            <!-- TOPBAR -->
+            <div class="topbar">
+                <div>
+                    <h3>Dashboard</h3>
+                    <span>Welcome to your Workspace</span>
+                </div>
+
+                <div class="top-actions" style="display: flex; gap: 15px; align-items: center;">
+                    <div style="position: relative;">
+                        <input type="file" id="dashboardDataFile"
+                            accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
+                            style="display: none;">
+                        <button class="filter-btn" onclick="document.getElementById('dashboardDataFile').click()"
+                            style="padding: 12px 20px; font-weight: 600; background: rgba(0, 242, 254, 0.1); border-color: rgba(0, 242, 254, 0.3); color: #00f2fe;">
+                            <i class="fas fa-cloud-upload-alt" style="margin-right: 8px;"></i> Sync Data
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STAT CARDS -->
+            <div class="cards">
+                <!-- 1. Performance Metrics -->
+                <div class="card performance">
+                    <div class="card-header">
+                        <h4>Sales & Basket Growth</h4>
+                        <i class="fas fa-ellipsis-h"></i>
+                    </div>
+                    <div class="chart-container" style="flex: 1; position: relative;">
+                        <canvas id="performanceChart"></canvas>
+                    </div>
+                    <div class="performance-stats">
+                        <div class="stat">
+                            <h3>$14.5k</h3>
+                            <span>Revenue</span>
+                        </div>
+                        <div class="stat">
+                            <h3>92%</h3>
+                            <span>Growth</span>
+                        </div>
+                        <div class="stat">
+                            <h3>3.2</h3>
+                            <span>Avg. Basket</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Perfect Pairs -->
+                <div class="card pairs">
+                    <div class="card-header">
+                        <h4>Top Associations</h4>
+                        <i class="fas fa-ellipsis-h"></i>
+                    </div>
+                    <ul class="progress-list">
+                        <li>
+                            <div class="progress-info"><span>Laptop + Mouse</span> <span>85%</span></div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 85%; background: #00f2fe;"></div>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="progress-info"><span>Coffee + Sugar</span> <span>72%</span></div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 72%; background: #10b981;"></div>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="progress-info"><span>Phone + Case</span> <span>90%</span></div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 90%; background: #3b82f6;"></div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- 3. Inventory Movement / Best Sellers -->
+                <div class="card inventory">
+                    <div class="card-header">
+                        <h4>Inventory Movement</h4>
+                        <i class="fas fa-ellipsis-h"></i>
+                    </div>
+                    <div class="chart-container" style="flex: 1; position: relative; margin-top: 15px;">
+                        <canvas id="inventoryChart"></canvas>
+                    </div>
+                    <div class="inventory-legend">
+                        <div class="legend-item"><span class="dot" style="background:#00f2fe;"></span> Electronics 45%
+                        </div>
+                        <div class="legend-item"><span class="dot" style="background:#3b82f6;"></span> Apparel 30%</div>
+                        <div class="legend-item"><span class="dot" style="background:#10b981;"></span> Groceries 25%
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Quick Insights -->
+                <div class="card insights">
+                    <div class="card-header">
+                        <h4>Quick Insights</h4>
+                        <i class="fas fa-ellipsis-h"></i>
+                    </div>
+                    <div class="insight-numbers">
+                        <div class="insight-row">
+                            <img src="https://ui-avatars.com/api/?name=Total+Rules&background=random" alt="Avatar"
+                                class="insight-avatar">
+                            <span class="label">Rules Found</span>
+                            <span class="value cyan">1,245</span>
+                        </div>
+                        <div class="insight-row">
+                            <img src="https://ui-avatars.com/api/?name=Active&background=random" alt="Avatar"
+                                class="insight-avatar">
+                            <span class="label">Analyzed</span>
+                            <span class="value blue">14k</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TABLE -->
+            <div class="table-container">
+                <div class="table-header">
+                    <h3>Lost Sales Opportunities</h3>
+                    <button class="filter-btn">Filter</button>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>NO</th>
+                            <th>ITEM BOUGHT</th>
+                            <th>MISSED ITEM</th>
+                            <th>MISSED %</th>
+                            <th>EST. LOST VOLUME</th>
+                            <th>ACTION</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lostSalesBody">
+                        <!-- Dynamic Rows from Market Basket Gaps injected here -->
+                        <tr>
+                            <td colspan="6" style="text-align: center; color: rgba(255,255,255,0.5); padding: 20px;">
+                                Upload a dataset or run Mining Features to discover lost sales opportunities.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </main>
+
+    </div>
+
+
+    <script>
+        function logout() {
+            window.location.href = "auth.html";
+        }
+
+        // Initialize Chart.js configuration for Glassmorphism glowing look
+        Chart.defaults.color = '#94a3b8';
+        Chart.defaults.font.family = 'Inter';
+
+        // Performance Chart (Line Chart)
+        const ctxPerformance = document.getElementById('performanceChart').getContext('2d');
+
+        // Gradient for line
+        let gradientBlue = ctxPerformance.createLinearGradient(0, 0, 0, 400);
+        gradientBlue.addColorStop(0, 'rgba(0, 242, 254, 0.5)');
+        gradientBlue.addColorStop(1, 'rgba(0, 242, 254, 0)');
+
+        window.performanceChartInstance = new Chart(ctxPerformance, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+                datasets: [{
+                    label: 'Sales Revenue',
+                    data: [12000, 19000, 15000, 22000, 18000, 28000, 24000],
+                    borderColor: '#00f2fe',
+                    backgroundColor: gradientBlue,
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true,
+                    pointBackgroundColor: '#00f2fe',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: '#00f2fe',
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false, drawBorder: false }
+                    },
+                    y: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.05)',
+                            drawBorder: false
+                        },
+                        ticks: { display: false }
+                    }
+                }
+            }
+        });
+
+        // Inventory Movement Chart (Doughnut Chart)
+        const ctxInventory = document.getElementById('inventoryChart').getContext('2d');
+        window.inventoryChartInstance = new Chart(ctxInventory, {
+            type: 'doughnut',
+            data: {
+                labels: ['Electronics', 'Apparel', 'Groceries'],
+                datasets: [{
+                    data: [45, 30, 25],
+                    backgroundColor: [
+                        '#00f2fe',
+                        '#3b82f6',
+                        '#10b981'
+                    ],
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+
+    </script>
+    <!-- Include processing libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- We embed a specific lightweight miner logic strictly for the dashboard charts here -->
+    <script src="javascript/dashboard-logic.js"></script>
+    <style>
+        /* Add some specific styles that override table text to white */
+        .table-container th,
+        .table-container td {
+            color: #fff !important;
+        }
+    </style>
+
+    <!-- HELP SLIDE-OUT PANEL -->
+    <div class="help-overlay" id="helpOverlay" onclick="toggleHelpPanel()"></div>
+    <div class="help-panel" id="helpPanel">
+        <div class="help-header">
+            <h2><i class="fas fa-question-circle" style="margin-right: 10px; color: #00f2fe;"></i> Help Center</h2>
+            <button class="close-btn" onclick="toggleHelpPanel()">&times;</button>
+        </div>
+        <div class="help-content">
+            <div class="help-section">
+                <h3><i class="fas fa-magic"></i> How to Use This Dashboard</h3>
+                <ol style="margin-top: 10px; padding-left: 20px; color: rgba(255,255,255,0.8); line-height: 1.6;">
+                    <li>Upload your sales data (.csv or excel) using the <strong>Sync Data</strong> button.</li>
+                    <li>Ensure your file has a Column for <code>Transaction ID</code> and a Column for
+                        <code>Product Name</code>.
+                    </li>
+                    <li>Watch the system automatically find hidden purchasing patterns!</li>
+                </ol>
+            </div>
+
+            <div class="help-section">
+                <h3><i class="fas fa-chart-pie"></i> Understanding the Metrics</h3>
+                <ul style="margin-top: 10px; padding-left: 20px; color: rgba(255,255,255,0.8); line-height: 1.6;">
+                    <li><strong>Rules Found:</strong> The total number of valid product combinations discovered in your
+                        data.</li>
+                    <li><strong>Top Associations:</strong> Items frequently bought together.</li>
+                    <li><strong>Confidence % (Bars):</strong> How likely it is that a customer will buy the second item.
+                        <em>Example: 85% means 85 out of 100 people who bought the first item also bought the
+                            second.</em>
+                    </li>
+                    <li><strong>Inventory Movement:</strong> Your absolute best-selling individual item categories.</li>
+                </ul>
+            </div>
+
+            <div class="help-section">
+                <h3><i class="fas fa-exclamation-triangle" style="color: #ff4757;"></i> What Are Lost Sales
+                    Opportunities?</h3>
+                <p style="margin-top: 10px; color: rgba(255,255,255,0.8); line-height: 1.6;">
+                    <strong>The Gap (Missed %):</strong> This highlights times a customer bought the first item, but
+                    <em>didn't</em> buy the second item that usually goes with it.<br><br>
+                    <strong>Action:</strong> Click <strong>"Create Bundle"</strong> to make a marketing strategy for
+                    these two items so you don't lose that sale next time!
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Toggle Script -->
+    <script>
+        function toggleHelpPanel() {
+            const panel = document.getElementById('helpPanel');
+            const overlay = document.getElementById('helpOverlay');
+            panel.classList.toggle('active');
+            overlay.classList.toggle('active');
+        }
+    </script>
+</body>
+
+</html>
