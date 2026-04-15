@@ -11,8 +11,12 @@ class MiningEngine:
         """
         t0 = time.time()
         
-        # 1. Convert to transactions to a OHE DataFrame
-        df_encoded = pd.DataFrame([[ (item in tx) for item in product_list ] for tx in transactions ], columns=product_list)
+        # 1. Convert to transactions to a OHE DataFrame using optimized TransactionEncoder
+        from mlxtend.preprocessing import TransactionEncoder
+        
+        te = TransactionEncoder()
+        te_ary = te.fit(transactions).transform(transactions)
+        df_encoded = pd.DataFrame(te_ary, columns=te.columns_)
         
         # 2. Run selected algorithm
         if algorithm == 'apriori':
@@ -20,59 +24,70 @@ class MiningEngine:
         else:
             frequent_itemsets = fpgrowth(df_encoded, min_support=min_support, use_colnames=True)
         
-        if frequent_itemsets.empty:
-            return {
-                "rules": [],
-                "itemsets": {},
-                "meta": {
-                    "algorithm": algorithm,
-                    "time_taken": (time.time() - t0) * 1000
-                }
-            }
-        
-        # 3. Generate Association Rules
-        rules = association_rules(frequent_itemsets, metric="confidence", min_threshold=min_threshold)
-        
-        # 4. Format Output for Frontend
+        # 3. Initialize results
         formatted_rules = []
-        for idx, row in rules.sort_values(by='confidence', ascending=False).iterrows():
-            formatted_rules.append({
-                "antecedent": ", ".join(list(row['antecedents'])),
-                "consequent": ", ".join(list(row['consequents'])),
-                "support": round(row['support'], 4),
-                "conf": round(row['confidence'] * 100, 1), # UI expects percentage
-                "lift": round(row['lift'], 4),
-                "count": int(row['support'] * len(transactions)), # Number of times this pair occurred
-                "pair": f"{', '.join(list(row['antecedents']))} + {', '.join(list(row['consequents']))}"
-            })
-            
-        # 5. Calculate Top Individual Products (Frequencies)
-        product_counts = {}
-        for tx in transactions:
-            for item in tx:
-                product_counts[item] = product_counts.get(item, 0) + 1
-        
-        top_products = [{"name": k, "count": v} for k, v in sorted(product_counts.items(), key=lambda x: x[1], reverse=True)]
-
-        # 6. Breakdown by Itemset Size
         breakdown = {}
-        for idx, row in frequent_itemsets.iterrows():
-            size = len(row['itemsets'])
-            breakdown[size] = breakdown.get(size, 0) + 1
+        itemset_details = {}  # Store actual itemsets by size
+        itemset_count = len(frequent_itemsets)
+        rule_count = 0
+        
+        # 4. Process Itemsets & Rules (if found)
+        if not frequent_itemsets.empty:
+            for idx, row in frequent_itemsets.iterrows():
+                items = list(row['itemsets'])
+                size = len(items)
+                breakdown[size] = breakdown.get(size, 0) + 1
+                
+                if size not in itemset_details:
+                    itemset_details[size] = []
+                itemset_details[size].append({
+                    "items": items,
+                    "support": round(row['support'], 4)
+                })
             
+            rules = association_rules(frequent_itemsets, metric="confidence", min_threshold=min_threshold)
+            rule_count = len(rules)
+            
+            for idx, row in rules.sort_values(by='confidence', ascending=False).iterrows():
+                # Find proof samples (literal transactions containing the rule)
+                rule_items = set(row['antecedents']).union(set(row['consequents']))
+                samples = []
+                for tx in transactions:
+                    if rule_items.issubset(set(tx)):
+                        samples.append({"items": tx})
+                        if len(samples) >= 3:
+                            break
+                            
+                formatted_rules.append({
+                    "antecedent": ", ".join(list(row['antecedents'])),
+                    "consequent": ", ".join(list(row['consequents'])),
+                    "support": round(row['support'], 4),
+                    "conf": round(row['confidence'] * 100, 1), # UI expects percentage
+                    "lift": round(row['lift'], 4),
+                    "count": int(row['support'] * len(transactions)), # Number of times this pair occurred
+                    "pair": f"{', '.join(list(row['antecedents']))} + {', '.join(list(row['consequents']))}",
+                    "samples": samples
+                })
+            
+        # 5. Calculate Top Individual Products (Frequencies) ALWAYS
+        all_items = [item for tx in transactions for item in tx]
+        counts = pd.Series(all_items).value_counts()
+        top_products = [{"name": str(name), "count": int(count)} for name, count in counts.items()]
+
         return {
             "rules": formatted_rules,
             "topPairs": formatted_rules, # Compatibility alias
             "topProducts": top_products,
             "breakdown": breakdown,
+            "itemset_details": itemset_details,
             "totalTransactions": len(transactions),
             "uniqueProducts": len(product_list),
-            "totalItems": sum(product_counts.values()),
+            "totalItems": len(all_items),
             "meta": {
                 "algorithm": "Apriori" if algorithm == 'apriori' else "FP-Growth",
                 "time_taken": round((time.time() - t0) * 1000, 2),
-                "itemset_count": len(frequent_itemsets),
-                "rule_count": len(rules)
+                "itemset_count": itemset_count,
+                "rule_count": rule_count
             }
         }
 

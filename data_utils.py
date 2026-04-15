@@ -17,12 +17,20 @@ class DataUtils:
             
             # Identify columns
             cols = df.columns.tolist()
-            tx_col = next((c for c in cols if any(k in c.lower() for k in ['transaction', 'invoice', 'order', 'id'])), None)
-            prod_col = next((c for c in cols if any(k in c.lower() for k in ['product', 'item', 'description', 'name'])), None)
             
-            if not tx_col or not prod_col:
-                # Fallback: Assume first column is TX ID, second is Product
+            # Smart detection for Transaction Column
+            tx_col = next((c for c in cols if any(k in c.lower() for k in ['transaction', 'invoice', 'order', 'id', 'member', 'number'])), None)
+            
+            # Smart detection for Product Column
+            prod_col = next((c for c in cols if any(k in c.lower() for k in ['product', 'item', 'description', 'name', 'model', 'article'])), None)
+            
+            # If still missing, use heuristic fallbacks but preserve found ones
+            if not tx_col and not prod_col:
                 tx_col, prod_col = cols[0], cols[1]
+            elif not tx_col:
+                tx_col = next(c for c in cols if c != prod_col)
+            elif not prod_col:
+                prod_col = next(c for c in cols if c != tx_col)
             
             # Validation: Drop missing values
             df = df.dropna(subset=[tx_col, prod_col])
@@ -36,6 +44,7 @@ class DataUtils:
             return {
                 "transactions": transactions,
                 "product_list": unique_products,
+                "mapping": {"tx": tx_col, "prod": prod_col},
                 "stats": {
                     "total_rows": len(df),
                     "unique_tx": len(transactions),
@@ -50,9 +59,7 @@ class DataUtils:
         """
         Convert transactions into a one-hot encoded DataFrame for MLxtend.
         """
-        encoded_data = []
-        for tx in transactions:
-            row = {prod: (prod in tx) for prod in product_list}
-            encoded_data.append(row)
-        
-        return pd.DataFrame(encoded_data)
+        from mlxtend.preprocessing import TransactionEncoder
+        te = TransactionEncoder()
+        te_ary = te.fit(transactions).transform(transactions)
+        return pd.DataFrame(te_ary, columns=te.columns_)

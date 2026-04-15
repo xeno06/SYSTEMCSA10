@@ -17,6 +17,11 @@ const PAGE_META = {
         title: 'Settings',
         subtitle: 'Algorithm thresholds and system preferences',
     },
+    '/evaluation': {
+        icon: 'fa-microscope',
+        title: 'System Evaluation',
+        subtitle: 'Assessing quality and user acceptance metrics',
+    },
     '/profile': {
         icon: 'fa-user-circle',
         title: 'User Profile',

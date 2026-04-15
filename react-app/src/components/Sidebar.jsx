@@ -4,6 +4,7 @@ import '../dashboard.css';
 const MAIN_MENU = [
     { to: '/dashboard', icon: 'fa-th-large', label: 'Dashboard' },
     { to: '/analytics', icon: 'fa-project-diagram', label: 'Analytics' },
+    { to: '/evaluation', icon: 'fa-microscope', label: 'Evaluation' },
     { to: '/settings', icon: 'fa-sliders-h', label: 'Settings' },
 ];
 

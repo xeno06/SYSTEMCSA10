@@ -152,20 +152,6 @@ export default function Settings() {
                         <span>Physics changes will take effect the next time you open the Analytics page.</span>
                     </div>
 
-                    {/* Node size legend */}
-                    <div style={{ marginTop: '24px' }}>
-                        <div className="settings-label" style={{ marginBottom: '12px' }}>Network Node Legend</div>
-                        {[
-                            { size: 36, color: '#10b981', label: 'Largest nodes = highest sales volume' },
-                            { size: 24, color: '#8b5cf6', label: 'Medium nodes = moderate sellers' },
-                            { size: 14, color: '#f59e0b', label: 'Small nodes = niche / low-volume items' },
-                        ].map(({ size, color, label }) => (
-                            <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '12px' }}>
-                                <div style={{ width: `${size}px`, height: `${size}px`, borderRadius: '50%', background: color + '25', border: `2px solid ${color}`, flexShrink: 0, boxShadow: `0 0 8px ${color}40` }}></div>
-                                <span style={{ fontSize: '13px', color: '#64748b' }}>{label}</span>
-                            </div>
-                        ))}
-                    </div>
                 </div>
             </div>
 

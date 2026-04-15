@@ -285,7 +285,7 @@ export default function Dashboard() {
                     <div className="db-card" style={{ marginTop: '24px', background: '#0f172a', padding: '28px', borderRadius: '16px' }}>
                         <div style={{ color: '#fff', fontWeight: '700', marginBottom: '25px', display: 'flex', alignItems: 'center', gap: '10px' }}>
                             <i className="fas fa-list-ol" style={{ color: '#10b981' }}></i>
-                            Product Performance Hierarchy
+                            Most Sold Products
                         </div>
                         <div style={{ height: '360px' }}><canvas ref={barRef}></canvas></div>
                     </div>

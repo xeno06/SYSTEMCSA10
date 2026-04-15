@@ -43,8 +43,9 @@ async def mine_associations(
             algorithm=algorithm
         )
         
-        # 3. Add original stats to results
+        # 3. Add original stats and mapping to results
         results['stats'] = data['stats']
+        results['mapping'] = data['mapping']
         
         return results
     except Exception as e:
