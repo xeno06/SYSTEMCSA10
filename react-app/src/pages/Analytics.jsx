@@ -1,12 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import Chart from 'chart.js/auto';
 import * as XLSX from 'xlsx';
 import '../dashboard.css';
 import '../mining.css';
 
 // ── MINING ENGINE INTEGRATION (PYTHON BACKEND) ─────────────────
-// Core ARM logic removed from frontend and migrated to Python/MLxtend 
-// for industrial-grade performance and research paper alignment.
 const API_URL = "http://localhost:8000";
 
 // ── Helpers ──────────────────────────────────────────────────
@@ -19,104 +16,170 @@ function loadMining() {
 
 const PALETTE = ['#10b981', '#8b5cf6', '#f59e0b', '#06b6d4', '#ec4899', '#ef4444', '#3b82f6', '#a3e635'];
 
-// ── Lightweight SVG Arc Diagram ────────────────────────────────
-function ArcDiagram({ products, pairs }) {
-    const W = 900, H = 280, MARGIN = 60;
-    const nodeY = H - 60;
-    const n = Math.min(products.length, 14);
-    const items = products.slice(0, n);
+// ── NEW BUSINESS COMPONENTS ────────────────────────────────────
 
-    if (!items.length) return (
-        <div className="empty-chart-state" style={{ position: 'relative', height: '280px' }}>
-            <i className="fas fa-project-diagram"></i>
-            <span>Upload sales data to populate the network</span>
+function BestSellerLeaderboard({ products }) {
+    if (!products?.length) return (
+        <div className="empty-chart-state">
+            <i className="fas fa-trophy"></i>
+            <span>Upload data to see your top sellers</span>
         </div>
     );
-
-    const step = (W - MARGIN * 2) / Math.max(n - 1, 1);
-    const positions = items.map((p, i) => ({
-        ...p,
-        x: MARGIN + i * step,
-        y: nodeY,
-        r: Math.max(6, Math.min(18, (p.count / (items[0]?.count || 1)) * 16 + 5)),
-        color: PALETTE[i % PALETTE.length],
-    }));
-
-    const arcs = (pairs || []).slice(0, 8).map((pair, i) => {
-        const [aName, bName] = (pair.pair || "").split(' + ');
-        if (!aName || !bName) return null;
-        const a = positions.find(p => p.name.startsWith(aName.slice(0, 6)) || aName.startsWith(p.name.slice(0, 6)));
-        const b = positions.find(p => p.name.startsWith(bName.slice(0, 6)) || bName.startsWith(p.name.slice(0, 6)));
-        if (!a || !b || a.x === b.x) return null;
-        const cx = (a.x + b.x) / 2;
-        const span = Math.abs(a.x - b.x);
-        const arcH = Math.min(span * 0.55, nodeY - 30);
-        const cy = nodeY - arcH;
-        return { a, b, cx, cy, conf: pair.conf, color: PALETTE[i % PALETTE.length] };
-    }).filter(Boolean);
-
-    const [hovered, setHovered] = useState(null);
-
+    const maxCount = products[0]?.count || 1;
     return (
-        <div style={{ width: '100%', overflowX: 'auto' }}>
-            <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', maxWidth: W, display: 'block', margin: '0 auto' }}>
-                {[...Array(5)].map((_, i) => (
-                    <line key={i} x1={MARGIN} y1={nodeY - i * 50} x2={W - MARGIN} y2={nodeY - i * 50}
-                        stroke="rgba(255,255,255,0.03)" strokeWidth="1" />
-                ))}
-                {arcs.map((arc, i) => {
-                    const isH = hovered === i;
-                    return (
-                        <g key={i}>
-                            <path
-                                d={`M ${arc.a.x} ${arc.a.y} Q ${arc.cx} ${arc.cy} ${arc.b.x} ${arc.b.y}`}
-                                fill="none"
-                                stroke={arc.color}
-                                strokeWidth={isH ? 3 : 1.5}
-                                strokeOpacity={isH ? 1 : 0.4}
-                                strokeDasharray={isH ? '0' : '4 3'}
-                                style={{ transition: 'stroke-opacity 0.2s, stroke-width 0.2s', cursor: 'pointer' }}
-                                onMouseEnter={() => setHovered(i)}
-                                onMouseLeave={() => setHovered(null)}
-                            />
-                            {isH && (
-                                <text x={arc.cx} y={arc.cy - 12} textAnchor="middle" fill={arc.color} fontSize="13" fontWeight="800" style={{ filter: 'drop-shadow(0 0 4px rgba(0,0,0,0.5))' }}>
-                                    {arc.conf}% Confidence
-                                </text>
-                            )}
-                        </g>
-                    );
-                })}
-                <line x1={MARGIN - 10} y1={nodeY} x2={W - MARGIN + 10} y2={nodeY} stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
-                {positions.map((p, i) => (
-                    <g key={i}>
-                        <circle cx={p.x} cy={p.y} r={p.r + 6} fill={p.color} fillOpacity="0.08" />
-                        <circle cx={p.x} cy={p.y} r={p.r} fill={p.color} fillOpacity="0.9" stroke="#0b1120" strokeWidth="2" />
-                        <text x={p.x} y={p.y + p.r + 14} textAnchor="middle" fill="#94a3b8" fontSize="11" fontWeight="500" style={{ userSelect: 'none' }}>
-                            {p.name.length > 15 ? p.name.slice(0, 12) + '…' : p.name}
-                        </text>
-                        <text x={p.x} y={p.y + 4} textAnchor="middle" fill="#fff" fontSize="9" fontWeight="800" style={{ userSelect: 'none' }}>
-                            {p.count}
-                        </text>
-                    </g>
-                ))}
-            </svg>
-
-            <div style={{ textAlign: 'center', fontSize: '11px', color: '#475569', marginTop: '4px' }}>
-                Hover over any arc to see the association confidence · Nodes sized by sales volume
-            </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {products.slice(0, 10).map((p, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ width: '28px', fontSize: '15px', fontWeight: 800, color: i < 3 ? '#f59e0b' : '#64748b', textAlign: 'center' }}>
+                        {i + 1}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '14px' }}>
+                            <span style={{ color: '#f8fafc', fontWeight: 600 }}>{p.name}</span>
+                            <span style={{ color: '#94a3b8', fontSize: '12px' }}>{p.count} sold</span>
+                        </div>
+                        <div style={{ height: '10px', background: 'rgba(255,255,255,0.05)', borderRadius: '5px', overflow: 'hidden' }}>
+                            <div 
+                                style={{ 
+                                    width: `${(p.count / maxCount) * 100}%`, 
+                                    height: '100%', 
+                                    background: `linear-gradient(90deg, ${PALETTE[i % PALETTE.length]} 0%, ${PALETTE[i % PALETTE.length]}cc 100%)`, 
+                                    borderRadius: '5px',
+                                    transition: 'width 1s ease-out'
+                                }}
+                            ></div>
+                        </div>
+                    </div>
+                </div>
+            ))}
         </div>
     );
 }
 
-// ── Component ──────────────────────────────────────────────────
-export default function Analytics() {
-    const confChartRef = useRef(null);
-    const supportChartRef = useRef(null);
-    const confChart = useRef(null);
-    const supportChart = useRef(null);
-    const fileInputRef = useRef(null);
+function ProductPairingCards({ pairs, onViewProof }) {
+    if (!pairs?.length) return (
+        <div className="empty-chart-state" style={{ height: '300px' }}>
+            <i className="fas fa-handshake"></i>
+            <span>Upload data to see best matches</span>
+        </div>
+    );
+    return (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
+            {pairs.slice(0, 6).map((p, i) => {
+                const [a, b] = p.pair.split(' + ');
+                return (
+                    <div key={i} className="db-card" style={{ padding: '20px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                        <div style={{ position: 'absolute', top: 0, right: 0, width: '4px', height: '100%', background: PALETTE[i % PALETTE.length] }}></div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+                            <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: PALETTE[i % PALETTE.length] + '15', display: 'flex', alignItems: 'center', justifyContent: 'center', color: PALETTE[i % PALETTE.length] }}>
+                                <i className="fas fa-star" style={{ fontSize: '14px' }}></i>
+                            </div>
+                            <div>
+                                <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Top Match #{i + 1}</div>
+                                <div style={{ fontSize: '12px', color: '#10b981', fontWeight: 600 }}>High Growth Potential</div>
+                            </div>
+                        </div>
+                        <div style={{ fontSize: '16px', fontWeight: 800, color: '#f8fafc', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <span style={{ padding: '4px 10px', background: 'rgba(255,255,255,0.05)', borderRadius: '6px' }}>{a}</span>
+                            <i className="fas fa-link" style={{ fontSize: '12px', color: '#475569' }}></i>
+                            <span style={{ padding: '4px 10px', background: 'rgba(255,255,255,0.05)', borderRadius: '6px' }}>{b}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                            <div>
+                                <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '2px' }}>Matches Found</div>
+                                <div style={{ fontSize: '24px', fontWeight: 900, color: '#f8fafc' }}>{p.count}<span style={{ fontSize: '14px', fontWeight: 600, marginLeft: '4px', color: '#94a3b8' }}>{p.count === 1 ? 'time' : 'times'}</span></div>
+                            </div>
+                            <button onClick={() => onViewProof(p)} style={{ background: 'transparent', color: '#10b981', border: '1px solid rgba(16,185,129,0.3)', padding: '6px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', transition: 'background 0.2s' }} onMouseOver={(e) => e.currentTarget.style.background = 'rgba(16,185,129,0.1)'} onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}>View Proof</button>
+                        </div>
+                    </div>
+                );
+            })}
+        </div>
+    );
+}
 
+function InteractiveMatchFinder({ products, pairs, onViewProof }) {
+    const [selected, setSelected] = useState('');
+    if (!products?.length) return null;
+    
+    const matches = selected ? (pairs || []).filter(p => p.pair.includes(selected)).sort((a, b) => b.conf - a.conf) : [];
+
+    return (
+        <div className="db-card" style={{ background: 'linear-gradient(135deg, rgba(59,130,246,0.1) 0%, rgba(59,130,246,0.02) 100%)', border: '1px solid rgba(59,130,246,0.2)', padding: '24px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px', marginBottom: '24px' }}>
+                <div>
+                    <h5 style={{ margin: 0, color: '#f8fafc', fontSize: '18px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <i className="fas fa-search" style={{ color: '#3b82f6' }}></i>
+                        Product Match-Maker
+                    </h5>
+                    <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#94a3b8' }}>Select an item to see what customers usually buy with it.</p>
+                </div>
+                <div style={{ position: 'relative', width: '300px' }}>
+                    <i className="fas fa-chevron-down" style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', pointerEvents: 'none' }}></i>
+                    <select 
+                        value={selected} 
+                        onChange={(e) => setSelected(e.target.value)}
+                        style={{ width: '100%', background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '10px 16px', borderRadius: '10px', fontSize: '14px', outline: 'none', appearance: 'none', cursor: 'pointer' }}
+                    >
+                        <option value="">Pick a product to check matches...</option>
+                        {products.slice(0, 50).map(p => <option key={p.name} value={p.name}>{p.name}</option>)}
+                    </select>
+                </div>
+            </div>
+            
+            {!selected ? (
+                <div style={{ textAlign: 'center', padding: '40px', color: '#64748b', fontSize: '14px', background: 'rgba(0,0,0,0.1)', borderRadius: '12px', border: '1px dashed rgba(255,255,255,0.05)' }}>
+                    <i className="fas fa-mouse-pointer" style={{ fontSize: '24px', display: 'block', marginBottom: '12px', opacity: 0.3 }}></i>
+                    Choose a product from the list above to start searching.
+                </div>
+            ) : matches.length > 0 ? (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '16px' }}>
+                    {matches.slice(0, 4).map((m, i) => {
+                        const otherItems = m.pair.split(' + ').filter(it => it.trim().toLowerCase() !== selected.trim().toLowerCase());
+                        const other = otherItems.length > 0 ? otherItems.join(', ') : selected;
+                        return (
+                            <div key={i} style={{ padding: '16px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', transition: 'transform 0.2s', display: 'flex', flexDirection: 'column' }}>
+                                <div style={{ fontSize: '11px', color: '#94a3b8', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Found Pairing:</div>
+                                <div style={{ fontSize: '15px', fontWeight: 800, color: '#f8fafc', marginBottom: '8px' }}>{other}</div>
+                                <p style={{ fontSize: '11px', color: '#64748b', margin: '0 0 12px 0', lineHeight: '1.4' }}>
+                                    Customers who bought <strong>{selected}</strong> also frequently picked up <strong>{other}</strong>.
+                                </p>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                                    <div style={{ fontSize: '18px', fontWeight: 900, color: '#10b981' }}>{m.count}</div>
+                                    <div style={{ fontSize: '11px', color: '#475569' }}>Matches Found</div>
+                                </div>
+                                <div style={{ background: 'rgba(16,185,129,0.05)', padding: '10px', borderRadius: '8px', marginBottom: '12px', borderLeft: '3px solid #10b981' }}>
+                                    <div style={{ fontSize: '9px', color: '#10b981', fontWeight: 800, textTransform: 'uppercase', marginBottom: '2px' }}>{m.strategy}</div>
+                                    <div style={{ fontSize: '12px', color: '#cbd5e1', fontWeight: 600 }}>{m.action}</div>
+                                </div>
+                                <button 
+                                    onClick={() => onViewProof(m)}
+                                    style={{ 
+                                        background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)', color: '#3b82f6', 
+                                        padding: '8px', borderRadius: '8px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', 
+                                        marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px'
+                                    }}
+                                >
+                                    <i className="fas fa-search-plus"></i> View Evidence
+                                </button>
+                            </div>
+                        );
+                    })}
+                </div>
+            ) : (
+                <div style={{ textAlign: 'center', padding: '40px', color: '#64748b', fontSize: '14px', background: 'rgba(0,0,0,0.1)', borderRadius: '12px', border: '1px dashed rgba(255,255,255,0.05)' }}>
+                    <i className="fas fa-times-circle" style={{ fontSize: '24px', display: 'block', marginBottom: '12px', opacity: 0.3 }}></i>
+                    No strong pairings found for "{selected}" in this dataset.
+                </div>
+            )}
+        </div>
+    );
+}
+
+// ── Main Component ──────────────────────────────────────────────
+
+export default function Analytics() {
+    const fileInputRef = useRef(null);
     const [miningData, setMiningData] = useState(null);
     const [isRunning, setIsRunning] = useState(false);
     const [fileName, setFileName] = useState('No file chosen');
@@ -124,149 +187,59 @@ export default function Analytics() {
     const [parseInfo, setParseInfo] = useState(null);
     const [analysisMeta, setAnalysisMeta] = useState(null);
     const [itemsetBreakdown, setItemsetBreakdown] = useState({});
-    const [itemsetDetails, setItemsetDetails] = useState({}); // Stores actual patterns
-    const [itemsetModal, setItemsetModal] = useState(null); // Controls the pattern drill-down modal
+    const [itemsetDetails, setItemsetDetails] = useState({});
+    const [itemsetModal, setItemsetModal] = useState(null);
     const [proofModal, setProofModal] = useState(null);
     const [engineStatus, setEngineStatus] = useState("Checking...");
     const [dataMapping, setDataMapping] = useState(null);
     const [algorithm, setAlgorithm] = useState('fp-growth');
+    const [businessType, setBusinessType] = useState('convenience store');
+    const [seasonalInsight, setSeasonalInsight] = useState(null);
+    const [validationAlerts, setValidationAlerts] = useState([]);
+    const [showTechDetails, setShowTechDetails] = useState(false);
 
     useEffect(() => {
         const saved = loadMining();
         if (saved) {
             setMiningData(saved);
-            if (saved.meta) setAnalysisMeta(saved.meta);
-            if (saved.breakdown) setItemsetBreakdown(saved.breakdown);
-            if (saved.itemset_details) setItemsetDetails(saved.itemset_details);
+            setAnalysisMeta(saved.meta);
+            setItemsetBreakdown(saved.breakdown || {});
+            setItemsetDetails(saved.itemset_details || {});
         }
 
-        // Check Backend Health
         fetch(`${API_URL}/health`)
             .then(res => res.json())
             .then(data => setEngineStatus(data.status))
             .catch(() => setEngineStatus("Offline"));
     }, []);
 
-    useEffect(() => {
-        const saved = loadMining();
-        if (saved) {
-            setMiningData(saved);
-            if (saved.meta) setAnalysisMeta(saved.meta);
-            if (saved.breakdown) setItemsetBreakdown(saved.breakdown);
-            if (saved.itemset_details) setItemsetDetails(saved.itemset_details);
-        }
-    }, []);
-
-    // ── Charts ─────────────────────────────────────────────────
-    useEffect(() => {
-        if (!confChartRef.current || !miningData?.topPairs?.length) return;
-        if (confChart.current) { confChart.current.destroy(); confChart.current = null; }
-
-        confChart.current = new Chart(confChartRef.current, {
-            type: 'bar',
-            data: {
-                labels: miningData.topPairs.map(p => p.pair),
-                datasets: [{
-                    label: 'Confidence %',
-                    data: miningData.topPairs.map(p => p.conf),
-                    backgroundColor: miningData.topPairs.map((_, i) => PALETTE[i % PALETTE.length] + 'cc'),
-                    borderColor: miningData.topPairs.map((_, i) => PALETTE[i % PALETTE.length]),
-                    borderWidth: 1, borderRadius: 6,
-                }]
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false, indexAxis: 'y',
-                plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1e293b' } },
-                scales: {
-                    x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#475569' }, max: 100, title: { display: true, text: 'CONFIDENCE PERCENTAGE (%)', color: '#64748b', font: { size: 10, weight: 700 } } },
-                    y: { grid: { display: false }, ticks: { color: '#e2e8f0' }, title: { display: true, text: 'RULE PAIRS', color: '#64748b', font: { size: 10, weight: 700 } } }
-                }
-            }
-        });
-        return () => { if (confChart.current) { confChart.current.destroy(); } };
-    }, [miningData]);
-
-    useEffect(() => {
-        if (!supportChartRef.current || !miningData?.topProducts?.length) return;
-        if (supportChart.current) { supportChart.current.destroy(); supportChart.current = null; }
-
-        const top = miningData.topProducts.slice(0, 10);
-        const maxCount = top[0]?.count || 1;
-
-        supportChart.current = new Chart(supportChartRef.current, {
-            type: 'bubble',
-            data: {
-                datasets: top.map((p, i) => ({
-                    label: p.name,
-                    data: [{ x: i + 1, y: p.count, r: Math.max(6, (p.count / maxCount) * 28) }],
-                    backgroundColor: PALETTE[i % PALETTE.length] + '88',
-                    borderColor: PALETTE[i % PALETTE.length],
-                    borderWidth: 2,
-                }))
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1e293b' } },
-                scales: {
-                    x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#475569', stepSize: 1 }, title: { display: true, text: 'TOP PRODUCT RANK', color: '#64748b', font: { size: 10, weight: 700 } } },
-                    y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#475569' }, title: { display: true, text: 'TOTAL SALES VOLUME (QTY)', color: '#64748b', font: { size: 10, weight: 700 } } }
-                }
-            }
-        });
-        return () => { if (supportChart.current) { supportChart.current.destroy(); } };
-    }, [miningData]);
-
-    // ── Handlers ───────────────────────────────────────────────
     const handleFileUpload = (e) => {
         const file = e.target.files[0];
         if (!file) return;
         setFileName(file.name);
         setRawFile(file);
+        
+        // Clear previous analysis to avoid confusion with new data
+        setMiningData(null);
+        setParseInfo(null);
+        localStorage.removeItem('cobuy_mining_results');
 
-        // Pre-parse locally just for UI feedback (Ready: X tx)
-        // Pre-parse locally for UI feedback (Ready: X tx) - use a sample for huge files to avoid main-thread lock
         const reader = new FileReader();
         reader.onload = (evt) => {
             try {
                 const data = evt.target.result;
-                // Only parse headers and first few rows if the file is massive
-                const workbook = XLSX.read(data, { type: 'binary', sheetRows: file.size > 2 * 1024 * 1024 ? 100 : undefined });
+                const workbook = XLSX.read(data, { type: 'binary', sheetRows: 100 });
                 const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-
                 if (jsonData.length === 0) return;
 
-                let txIdKey = Object.keys(jsonData[0] || {}).find(k => /transaction|invoice|order|id/i.test(k));
-                const salesVolume = jsonData.length;
+                let txIdKey = Object.keys(jsonData[0]).find(k => /transaction|invoice|order|id/i.test(k));
+                setParseInfo({
+                    txCount: jsonData.length,
+                    productCount: '...'
+                });
 
-                if (txIdKey) {
-                    const txSet = new Set(jsonData.map(r => r[txIdKey]).filter(Boolean));
-                    setParseInfo({
-                        txCount: file.size > 2 * 1024 * 1024 ? `~${txSet.size}+` : txSet.size,
-                        rowCount: salesVolume,
-                        productCount: '...'
-                    });
-                } else {
-                    setParseInfo({
-                        txCount: file.size > 2 * 1024 * 1024 ? `~${jsonData.length}+` : jsonData.length,
-                        rowCount: salesVolume,
-                        productCount: '...'
-                    });
-                }
-
-                // ── SMART SCALE LOGIC (Switched to Transaction Count) ──
-                let currentTxCount = 0;
-                if (txIdKey) {
-                    const txSet = new Set(jsonData.map(r => r[txIdKey]).filter(Boolean));
-                    currentTxCount = txSet.size;
-                } else {
-                    currentTxCount = jsonData.length;
-                }
-
-                if (currentTxCount >= 500) {
-                    setAlgorithm('fp-growth');
-                } else if (currentTxCount <= 400) {
-                    setAlgorithm('apriori');
-                }
+                if (jsonData.length >= 500) setAlgorithm('fp-growth');
+                else setAlgorithm('apriori');
             } catch (err) { console.error("UI Feedback Error:", err); }
         };
         reader.readAsBinaryString(file);
@@ -279,54 +252,29 @@ export default function Analytics() {
         try {
             const formData = new FormData();
             formData.append('file', rawFile);
-
-            // Read Global Settings from LocalStorage
-            const storedSupport = localStorage.getItem('cobuy_min_support') || 1;
-            const storedConfidence = localStorage.getItem('cobuy_min_confidence') || 10;
-
-            // Hybrid Engine Control
             formData.append('algorithm', algorithm);
-            formData.append('min_support', Number(storedSupport) / 100);
-            formData.append('min_confidence', Number(storedConfidence) / 100);
+            formData.append('min_support', (Number(localStorage.getItem('cobuy_min_support')) || 1) / 100);
+            formData.append('min_confidence', (Number(localStorage.getItem('cobuy_min_confidence')) || 10) / 100);
+            formData.append('business_type', businessType);
 
-            const response = await fetch(`${API_URL}/mine`, {
-                method: 'POST',
-                body: formData
-            });
-
-            if (!response.ok) throw new Error("Backend Error");
-
-            const data = await response.json();
-
-            // ── SELF-HEALING DATA MAPPING ──────────────────────────────
-            let topPairs = data.topPairs || data.rules || [];
-            let topProducts = data.topProducts || [];
-
-            if (topProducts.length === 0 && topPairs.length > 0) {
-                // Optimized frequency builder
-                const counts = new Map();
-                for (let i = 0; i < topPairs.length; i++) {
-                    const items = topPairs[i].antecedent.split(', ');
-                    for (let j = 0; j < items.length; j++) {
-                        const it = items[j];
-                        counts.set(it, (counts.get(it) || 0) + 1);
-                    }
-                }
-                topProducts = Array.from(counts.entries())
-                    .map(([name, count]) => ({ name, count }))
-                    .sort((a, b) => b.count - a.count);
+            const response = await fetch(`${API_URL}/mine`, { method: 'POST', body: formData });
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.detail || "Backend Error");
             }
 
+            const data = await response.json();
+            
             const finalData = {
                 ...data,
-                topPairs,
-                topProducts,
+                topPairs: data.topPairs || data.rules || [],
+                topProducts: data.topProducts || [],
                 analysedAt: new Date().toISOString(),
                 meta: {
                     ...data.meta,
                     timestamp: new Date().toLocaleString(),
-                    algorithmLabel: data.meta.algorithm,
-                    proofLabel: data.meta.algorithm === 'Apriori' ? 'Candidates Scanned' : 'FP-Tree Nodes',
+                    algorithmLabel: data.meta.algorithm === 'Apriori' ? 'Standard Analysis' : 'Deep Analysis',
+                    proofLabel: 'Total Checks Performed',
                     proofValue: data.meta.itemset_count,
                     timeTaken: data.meta.time_taken
                 }
@@ -336,311 +284,374 @@ export default function Analytics() {
             setAnalysisMeta(finalData.meta);
             setItemsetBreakdown(data.breakdown || {});
             setItemsetDetails(data.itemset_details || {});
+            setSeasonalInsight(data.seasonal_insight || null);
+            setValidationAlerts(data.validation_alerts || []);
             localStorage.setItem('cobuy_mining_results', JSON.stringify(finalData));
-
-            if (data.stats) {
-                setParseInfo({ txCount: data.stats.unique_tx, productCount: data.stats.unique_products });
-            }
-            if (data.mapping) {
-                setDataMapping(data.mapping);
-            }
+            
+            if (data.stats) setParseInfo({ txCount: data.stats.unique_tx, productCount: data.stats.unique_products });
+            if (data.mapping) setDataMapping(data.mapping);
         } catch (err) {
-            alert(`Mining Failed: ${err.message}. Ensure Python server is running.`);
+            alert(`Analysis Failed: ${err.message}. Check if your Python server is running.`);
         } finally {
             setIsRunning(false);
         }
     };
 
-
     const exportAll = () => {
-        const lines = ["Analytics Report", `Generated: ${new Date().toLocaleString()}`, "", "Top Products", "Rank,Product,Sold"];
+        const lines = ["Sales Analysis Report", `Generated: ${new Date().toLocaleString()}`, "", "Top Products", "Rank,Product,Quantity Sold"];
         miningData.topProducts.forEach((p, i) => lines.push(`${i + 1},"${p.name}",${p.count}`));
-        lines.push("", "Associations", "Pair,Confidence %,Support");
-        miningData.topPairs.forEach(p => lines.push(`"${p.pair}",${p.conf}%,${p.count}`));
+        lines.push("", "Best Pairings", "Pair,Chance %,Popularity");
+        miningData.topPairs.forEach(p => lines.push(`"${p.pair.replace(' + ', ' with ')}",${p.conf}%,${(p.support*100).toFixed(2)}%`));
 
         const blob = new Blob([lines.join("\n")], { type: 'text/csv' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url; a.download = 'analytics_report.csv'; a.click();
-    };
-
-    const exportRapidMiner = () => {
-        // RapidMiner typically expects a Transaction ID followed by items
-        const raw = miningData?.topPairs.map(p => {
-            const [a, b] = p.pair.split(' + ');
-            return `TX_ID,${a},${b}`;
-        }).join('\n');
-
-        const blob = new Blob([`Transaction,Item1,Item2\n${raw}`], { type: 'text/csv' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = 'rapidminer_validation.csv'; a.click();
+        a.href = url; a.download = 'sales_analysis_report.csv'; a.click();
     };
 
     const noData = !miningData;
 
+    // Deduplicate pairs so A+B and B+A don't show twice
+    const uniqueTopPairs = [];
+    if (miningData?.topPairs) {
+        const seen = new Set();
+        for (const p of miningData.topPairs) {
+            const key = p.pair.split(' + ').map(s => s.trim()).sort().join('|');
+            if (!seen.has(key)) {
+                seen.add(key);
+                uniqueTopPairs.push(p);
+            }
+        }
+    }
+
     return (
         <div className="db-body">
             {/* ── Header / Upload ── */}
-            <div className="db-card" style={{ marginBottom: '24px', border: '1px dashed rgba(16,185,129,0.3)', background: 'rgba(16,185,129,0.02)' }}>
+            <div className="db-card" style={{ marginBottom: '32px', border: '1px solid rgba(16,185,129,0.2)', background: 'rgba(16,185,129,0.02)', padding: '24px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
                     <div style={{ flex: 1 }}>
-                        <h4 style={{ margin: '0 0 4px 0', color: '#10b981' }}>Data Import & Mining</h4>
-                        <p style={{ margin: 0, fontSize: '13px', color: '#94a3b8' }}>Upload sales data (.xlsx, .csv) to generate real-time product association insights.</p>
+                        <h4 style={{ margin: '0 0 8px 0', color: '#10b981', fontSize: '20px' }}>Sales Analysis Dashboard</h4>
+                        <p style={{ margin: 0, fontSize: '14px', color: '#94a3b8' }}>Upload your sales records to discover best-sellers and perfect product pairings.</p>
                     </div>
                     <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                         <div style={{
-                            display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 14px',
+                            display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px',
                             background: engineStatus === 'Active' ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
                             border: `1px solid ${engineStatus === 'Active' ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)'}`,
-                            borderRadius: '10px', fontSize: '11px', color: engineStatus === 'Active' ? '#10b981' : '#ef4444', fontWeight: 600
+                            borderRadius: '10px', fontSize: '12px', color: engineStatus === 'Active' ? '#10b981' : '#ef4444', fontWeight: 600
                         }}>
-                            <i className={engineStatus === 'Active' ? "fas fa-check-circle" : "fas fa-exclamation-triangle"}></i> Python Engine: {engineStatus}
+                            <i className={engineStatus === 'Active' ? "fas fa-check-circle" : "fas fa-exclamation-triangle"}></i> System Status: {engineStatus}
                         </div>
                         <input type="file" ref={fileInputRef} onChange={handleFileUpload} style={{ display: 'none' }} accept=".xlsx,.xls,.csv" />
-                        <button className="file-btn" onClick={() => fileInputRef.current.click()} style={{ padding: '8px 16px' }}>
-                            <i className="fas fa-file-excel" style={{ marginRight: '8px' }}></i>{parseInfo ? 'Change File' : 'Select Data File'}
+                        <button className="file-btn" onClick={() => {
+                            if (fileInputRef.current) fileInputRef.current.value = '';
+                            fileInputRef.current.click();
+                        }}>
+                            <i className="fas fa-file-excel" style={{ marginRight: '8px' }}></i>{parseInfo ? 'Change Data' : 'Select Sales File'}
                         </button>
-                        {fileName !== 'No file chosen' && <span style={{ fontSize: '12px', color: '#64748b' }}>{fileName.length > 20 ? fileName.slice(0, 17) + '...' : fileName}</span>}
                         <button className="primary-btn pulse" onClick={runAnalysis} disabled={isRunning || !rawFile || engineStatus !== 'Active'}
-                            style={{ width: 'auto', padding: '8px 24px', fontSize: '14px', borderRadius: '8px', opacity: engineStatus === 'Active' ? 1 : 0.5 }}>
-                            {isRunning ? <><i className="fas fa-spinner fa-spin" style={{ marginRight: '8px' }}></i>Analyzing...</> : 'Run Analysis'}
+                            style={{ width: 'auto', padding: '10px 28px', fontSize: '15px', borderRadius: '10px', opacity: engineStatus === 'Active' ? 1 : 0.5 }}>
+                            {isRunning ? <><i className="fas fa-spinner fa-spin" style={{ marginRight: '8px' }}></i>Analyzing...</> : 'Analyze My Sales'}
                         </button>
                     </div>
                 </div>
 
-                {parseInfo && (
-                    <div style={{ marginTop: '16px', padding: '12px 16px', background: 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.1)', borderRadius: '10px', fontSize: '12px', color: '#10b981', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div style={{ display: 'flex', gap: '20px' }}>
-                            <span><i className="fas fa-check-circle" style={{ marginRight: '6px' }}></i>Ready: {parseInfo.txCount} transactions</span>
-                            <span><i className="fas fa-tags" style={{ marginRight: '6px' }}></i>{parseInfo.productCount} products found</span>
+                <div style={{ marginTop: '20px', display: 'flex', gap: '16px', alignItems: 'center', padding: '16px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px' }}>
+                    <span style={{ fontSize: '13px', color: '#94a3b8', fontWeight: 600 }}>Business Type:</span>
+                    <select 
+                        value={businessType} 
+                        onChange={(e) => setBusinessType(e.target.value)}
+                        style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '8px 14px', borderRadius: '8px', fontSize: '13px', outline: 'none', cursor: 'pointer' }}
+                    >
+                        <option value="convenience store">Convenience Store</option>
+                        <option value="pet food shop">Pet Food Shop</option>
+                        <option value="coffee shop">Coffee Shop</option>
+                    </select>
+                    {parseInfo && (
+                        <div style={{ marginLeft: 'auto', display: 'flex', gap: '20px', fontSize: '13px', color: '#10b981' }}>
+                            <span><i className="fas fa-receipt" style={{ marginRight: '8px' }}></i>{parseInfo.txCount} Sales Found</span>
+                            <span><i className="fas fa-tags" style={{ marginRight: '8px' }}></i>{parseInfo.productCount} Products Found</span>
                         </div>
-                        {dataMapping && (
-                            <div style={{ color: '#94a3b8', fontSize: '11px', fontWeight: 500 }}>
-                                <i className="fas fa-link" style={{ marginRight: '6px', color: '#8b5cf6' }}></i>
-                                Mapped: <span style={{ color: '#f8fafc' }}>{dataMapping.tx}</span> <i className="fas fa-arrow-right" style={{ fontSize: '10px', margin: '0 4px' }}></i> <span style={{ color: '#f8fafc' }}>{dataMapping.prod}</span>
+                    )}
+                </div>
+            </div>
+
+            {/* --- VALIDATION ALERTS (PANEL REQUIREMENT: Dataset Validation Mechanism) --- */}
+            {validationAlerts.length > 0 && (
+                <div style={{ marginBottom: '32px', display: 'flex', flexDirection: 'column', gap: '10px', animation: 'fadeIn 0.5s ease-out' }}>
+                    {validationAlerts.map((alert, idx) => (
+                        <div key={idx} style={{ 
+                            padding: '14px 20px', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', 
+                            borderRadius: '12px', color: '#f59e0b', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '12px' 
+                        }}>
+                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(245,158,11,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <i className="fas fa-shield-alt" style={{ fontSize: '14px' }}></i>
                             </div>
-                        )}
+                            <div>
+                                <span style={{ fontWeight: 800, textTransform: 'uppercase', fontSize: '10px', display: 'block', marginBottom: '2px', opacity: 0.8 }}>Data Integrity Validation</span>
+                                {alert}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* --- SMART PRODUCT RECOMMENDATIONS (TABLE FORMAT) --- */}
+            {!noData && uniqueTopPairs.length > 0 && (
+                <div className="db-card" style={{ marginBottom: '32px', padding: 0, overflow: 'hidden' }}>
+                    <div style={{ padding: '20px', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.02)' }}>
+                        <h4 style={{ margin: 0, color: '#f8fafc', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <i className="fas fa-table" style={{ color: '#f59e0b' }}></i>
+                            Smart Product Recommendations
+                        </h4>
+                        <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px', marginLeft: '26px' }}>Complete co-purchase rules from the mining engine</div>
+                    </div>
+                    
+                    <div className="scrollable-table-container" style={{ overflowX: 'auto', overflowY: 'auto', maxHeight: '350px' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                            <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#0f172a', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>
+                                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(0,0,0,0.2)' }}>
+                                    <th style={{ padding: '16px 20px', fontSize: '10px', color: '#64748b', fontWeight: 800, letterSpacing: '1px', textTransform: 'uppercase' }}>WHEN CUSTOMER BUYS...</th>
+                                    <th style={{ padding: '16px 20px', fontSize: '10px', color: '#64748b', fontWeight: 800, letterSpacing: '1px', textTransform: 'uppercase' }}>SYSTEM RECOMMENDS...</th>
+                                    <th style={{ padding: '16px 20px', fontSize: '10px', color: '#64748b', fontWeight: 800, letterSpacing: '1px', textTransform: 'uppercase' }}>CONFIDENCE</th>
+                                    <th style={{ padding: '16px 20px', fontSize: '10px', color: '#64748b', fontWeight: 800, letterSpacing: '1px', textTransform: 'uppercase' }}>ACTION</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {uniqueTopPairs.map((p, i) => {
+                                    const [a, b] = p.pair.split(' + ');
+                                    return (
+                                        <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
+                                            <td style={{ padding: '16px 20px', color: '#f8fafc', fontWeight: 600, fontSize: '14px' }}>{a}</td>
+                                            <td style={{ padding: '16px 20px', color: '#cbd5e1', fontSize: '14px' }}>{b}</td>
+                                            <td style={{ padding: '16px 20px', color: '#f59e0b', fontWeight: 800, fontSize: '14px' }}>{p.conf}%</td>
+                                            <td style={{ padding: '16px 20px' }}>
+                                                <button onClick={() => setProofModal(p)} style={{ background: 'transparent', color: '#10b981', border: '1px solid rgba(16,185,129,0.3)', padding: '6px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', transition: 'background 0.2s' }} onMouseOver={(e) => e.currentTarget.style.background = 'rgba(16,185,129,0.1)'} onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}>View Proof</button>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
+
+            {/* --- TOP INSIGHTS (SEASONAL & GROWTH) --- */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '32px' }}>
+                {seasonalInsight ? (
+                    <div className="db-card" style={{ border: '2px solid #8b5cf6', background: 'linear-gradient(135deg, rgba(139,92,246,0.15) 0%, rgba(139,92,246,0.02) 100%)' }}>
+                        <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+                            <div style={{ fontSize: '40px' }}>{analysisMeta?.analysis_month === 12 ? '🎄' : '📅'}</div>
+                            <div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    <h4 style={{ margin: 0, color: '#f8fafc', fontSize: '18px' }}>{seasonalInsight.theme}</h4>
+                                    <span style={{ fontSize: '10px', background: '#8b5cf6', color: '#fff', padding: '2px 8px', borderRadius: '4px', textTransform: 'uppercase', fontWeight: 800 }}>SEASONAL TREND</span>
+                                </div>
+                                <p style={{ margin: '8px 0 0 0', fontSize: '14px', color: '#cbd5e1', lineHeight: '1.5' }}>{seasonalInsight.suggestion}</p>
+                            </div>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="db-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#475569', fontSize: '14px' }}>
+                        No seasonal trends detected yet.
+                    </div>
+                )}
+
+                {!noData && (
+                    <div className="db-card" style={{ background: 'rgba(16,185,129,0.03)', border: '1px solid rgba(16,185,129,0.1)' }}>
+                        <h5 style={{ margin: '0 0 12px 0', color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '16px' }}>
+                            <i className="fas fa-rocket" style={{ color: '#10b981' }}></i>
+                            Store Growth Suggestions
+                        </h5>
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                            {uniqueTopPairs.slice(0, 2).map((p, i) => (
+                                <div key={i} style={{ flex: 1, padding: '12px', background: 'rgba(255,255,255,0.03)', borderRadius: '10px', borderLeft: `3px solid ${PALETTE[i % PALETTE.length]}` }}>
+                                    <div style={{ fontSize: '10px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 800, marginBottom: '4px' }}>{p.strategy}</div>
+                                    <div style={{ fontSize: '13px', color: '#f8fafc', fontWeight: 700 }}>{p.action}</div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 )}
             </div>
 
-            {/* ── CHART EXPLANATION banner ── */}
-            <div className="db-card" style={{ marginBottom: '24px', background: 'rgba(59,130,246,0.03)', border: '1px solid rgba(59,130,246,0.1)' }}>
-                <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-                    <div style={{ background: 'rgba(59,130,246,0.1)', width: '48px', height: '48px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', color: '#3b82f6' }}>
-                        <i className="fas fa-info-circle"></i>
+            {/* --- MAIN DASHBOARD AREA --- */}
+            <div style={{ display: 'grid', gridTemplateColumns: '350px 1fr', gap: '32px', marginBottom: '32px' }}>
+                {/* Left: Leaderboard */}
+                <div className="db-card" style={{ height: 'fit-content' }}>
+                    <div className="db-card-header" style={{ marginBottom: '24px' }}>
+                        <div className="db-card-title"><i className="fas fa-award" style={{ color: '#f59e0b', marginRight: '10px' }}></i>Best Seller Leaderboard</div>
+                        <div className="db-card-sub">Your top 10 most popular items</div>
                     </div>
-                    <div>
-                        <h5 style={{ margin: '0 0 8px 0', color: '#f8fafc', fontSize: '15px' }}>Understanding the Analytics</h5>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 30px' }}>
-                            <p style={{ margin: 0, fontSize: '12px', color: '#94a3b8', lineHeight: '1.5' }}>
-                                <strong style={{ color: '#3b82f6' }}>Circles (Nodes):</strong> Represent individual products. The <strong style={{color:'#f8fafc'}}>size</strong> reflects total sales volume, and the <strong style={{color:'#f8fafc'}}>number</strong> inside shows exactly how many times it was sold.
-                            </p>
-                            <p style={{ margin: 0, fontSize: '12px', color: '#94a3b8', lineHeight: '1.5' }}>
-                                <strong style={{ color: '#10b981' }}>Arcs (Arrows):</strong> Represent "bought together" associations. Thick or bright arcs mean higher <strong style={{color:'#f8fafc'}}>confidence</strong>—meaning customers who bought product A are very likely to buy product B.
-                            </p>
-                            <p style={{ margin: 0, fontSize: '12px', color: '#94a3b8', lineHeight: '1.5' }}>
-                                <strong style={{ color: '#8b5cf6' }}>Confidence Bar Chart:</strong> Ranks discovered associations by their <strong style={{color:'#f8fafc'}}>confidence percentage</strong>—the likelihood that buying one product leads to buying another.
-                            </p>
-                            <p style={{ margin: 0, fontSize: '12px', color: '#94a3b8', lineHeight: '1.5' }}>
-                                <strong style={{ color: '#06b6d4' }}>Volume Bubbles:</strong> Each bubble is a product. <strong style={{color:'#f8fafc'}}>Bigger bubbles</strong> = more sales. Shows which products are your top sellers at a glance.
-                            </p>
-                        </div>
+                    <BestSellerLeaderboard products={miningData?.topProducts} />
+                </div>
+
+                {/* Right: Pairing Cards */}
+                <div style={{ position: 'relative' }}>
+                    <div className="db-card-header" style={{ marginBottom: '20px' }}>
+                        <div className="db-card-title"><i className="fas fa-layer-group" style={{ color: '#10b981', marginRight: '10px' }}></i>Top Product Matches</div>
+                        <div className="db-card-sub">Which items customers frequently buy together</div>
+                    </div>
+                    <ProductPairingCards pairs={uniqueTopPairs} onViewProof={setProofModal} />
+                    
+                    <div style={{ marginTop: '24px', position: 'relative' }}>
+                        <InteractiveMatchFinder products={miningData?.topProducts} pairs={uniqueTopPairs} onViewProof={setProofModal} />
                     </div>
                 </div>
             </div>
 
-            {/* ── Visualizations ── */}
-            <div className="db-card" style={{ marginBottom: '24px' }}>
-                <div className="db-card-header">
-                    <div>
-                        <div className="db-card-title"><i className="fas fa-bezier-curve" style={{ color: '#10b981', marginRight: '8px' }}></i>Association Arc Diagram</div>
-                        <div className="db-card-sub">Top associations visualized as connections between products.</div>
-                    </div>
-                </div>
-                <ArcDiagram products={miningData?.topProducts ?? []} pairs={miningData?.topPairs ?? []} />
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
-                <div className="db-card">
-                    <div className="db-card-header">
-                        <div className="db-card-title"><i className="fas fa-chart-line" style={{ color: '#8b5cf6', marginRight: '8px' }}></i>Association Confidence</div>
-                    </div>
-                    <div style={{ height: '220px', position: 'relative' }}>
-                        {noData && <div className="empty-chart-state"><span>Run mining to see data</span></div>}
-                        <canvas ref={confChartRef}></canvas>
-                    </div>
-                </div>
-                <div className="db-card">
-                    <div className="db-card-header">
-                        <div className="db-card-title"><i className="fas fa-chart-pie" style={{ color: '#06b6d4', marginRight: '8px' }}></i>Product Volume Bubble</div>
-                    </div>
-                    <div style={{ height: '220px', position: 'relative' }}>
-                        {noData && <div className="empty-chart-state"><span>Run mining to see data</span></div>}
-                        <canvas ref={supportChartRef}></canvas>
-                    </div>
-                    {/* Node Legend */}
-                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '14px', marginTop: '8px' }}>
-                        <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '10px' }}>Node Size Legend</div>
-                        <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
-                            {[
-                                { size: 28, color: '#10b981', label: 'Largest = highest sales' },
-                                { size: 18, color: '#8b5cf6', label: 'Medium = moderate sellers' },
-                                { size: 10, color: '#f59e0b', label: 'Small = niche items' },
-                            ].map(({ size, color, label }) => (
-                                <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <div style={{ width: `${size}px`, height: `${size}px`, borderRadius: '50%', background: color + '25', border: `2px solid ${color}`, flexShrink: 0 }}></div>
-                                    <span style={{ fontSize: '11px', color: '#64748b' }}>{label}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+            {/* --- FOOTER / EXPORT / TECH --- */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+                <button 
+                    onClick={() => setShowTechDetails(!showTechDetails)}
+                    style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#64748b', padding: '8px 16px', borderRadius: '8px', fontSize: '12px', cursor: 'pointer' }}
+                >
+                    <i className={`fas fa-chevron-${showTechDetails ? 'down' : 'right'}`} style={{ marginRight: '8px' }}></i>
+                    {showTechDetails ? 'Hide' : 'Show'} Technical Details
+                </button>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                    {!noData && (
+                        <>
+                            <button onClick={exportAll} className="primary-btn" style={{ width: 'auto', background: 'rgba(16,185,129,0.1)', color: '#10b981', border: '1px solid #10b981', padding: '8px 20px' }}>
+                                <i className="fas fa-file-download" style={{ marginRight: '8px' }}></i>Export Report
+                            </button>
+                            <button onClick={() => alert("Advanced Export Ready")} style={{ background: 'transparent', border: '1px solid rgba(139,92,246,0.3)', color: '#8b5cf6', padding: '8px 20px', borderRadius: '10px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
+                                <i className="fas fa-microscope" style={{ marginRight: '8px' }}></i>Advanced Export
+                            </button>
+                        </>
+                    )}
                 </div>
             </div>
 
-            {/* ── Algorithm Proof (Itemsets) ── */}
-            {Object.keys(itemsetBreakdown).length > 0 && (
-                <div style={{ marginBottom: '24px', padding: '20px', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px dashed rgba(255,255,255,0.08)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-                        <i className="fas fa-microscope" style={{ color: '#10b981', fontSize: '18px' }}></i>
-                        <span style={{ fontSize: '14px', fontWeight: 600, color: '#f1f5f9' }}>Intermediate Discovery Steps (Algorithm Proof)</span>
-                    </div>
-                    <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-                        {Object.entries(itemsetBreakdown).map(([size, count]) => (
-                            <div 
-                                key={size} 
-                                onClick={() => setItemsetModal({ size, patterns: itemsetDetails[size] || [] })}
-                                style={{ 
-                                    background: 'rgba(255,255,255,0.04)', padding: '10px 16px', borderRadius: '10px', 
-                                    border: '1px solid rgba(255,255,255,0.05)', cursor: 'pointer',
-                                    transition: 'all 0.2s'
-                                }}
-                                className="proof-box-hover"
-                            >
-                                <div style={{ fontSize: '10px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700 }}>{size}-Itemsets</div>
-                                <div style={{ fontSize: '16px', fontWeight: 800, color: '#10b981', marginTop: '4px' }}>{count} patterns <i className="fas fa-external-link-alt" style={{ fontSize: '10px', marginLeft: '6px', opacity: 0.5 }}></i></div>
+            {showTechDetails && analysisMeta && (
+                <div style={{ animation: 'fadeIn 0.3s' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '24px' }}>
+                        {[
+                            { label: 'How we analyzed it', value: analysisMeta.algorithmLabel, color: '#f8fafc' },
+                            { label: 'Total Checks Performed', value: analysisMeta.proofValue, color: '#10b981' },
+                            { label: 'Analysis Speed', value: `${analysisMeta.timeTaken} ms`, color: '#8b5cf6' },
+                            { label: 'System Date', value: analysisMeta.timestamp, color: '#94a3b8' }
+                        ].map((stat, i) => (
+                            <div key={i} className="db-card" style={{ padding: '16px' }}>
+                                <div style={{ fontSize: '10px', color: '#64748b', textTransform: 'uppercase', fontWeight: 800, marginBottom: '4px' }}>{stat.label}</div>
+                                <div style={{ fontSize: '16px', fontWeight: 700, color: stat.color }}>{stat.value}</div>
                             </div>
                         ))}
                     </div>
-                    <div style={{ marginTop: '12px', fontSize: '11px', color: '#475569', fontStyle: 'italic' }}>
-                        * These represent the raw patterns identified by {analysisMeta?.algorithmLabel || 'the engine'} before they are converted into business rules.
-                    </div>
-                </div>
-            )}
 
-            {/* ── Associations Table ── */}
-            <div className="db-card">
-                <div className="db-card-header" style={{ paddingBottom: '12px' }}>
-                    <div className="db-card-title"><i className="fas fa-table" style={{ color: '#f59e0b', marginRight: '8px' }}></i>Smart Product Recommendations</div>
-                    <div className="db-card-sub">Complete co-purchase rules from the mining engine</div>
-                </div>
-                <div className="scrollable-table-container">
-                    <table className="db-table" style={{ position: 'relative' }}>
-                        <thead>
-                            <tr>
-                                <th>When Customer Buys...</th>
-                                <th>System Recommends...</th>
-                                <th>Confidence</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {(miningData?.topPairs ?? []).map((p, i) => (
-                                <tr key={i}>
-                                    <td style={{ color: '#f1f5f9', fontWeight: 600 }}>{p.pair.split(' + ')[0]}</td>
-                                    <td style={{ color: '#94a3b8' }}>{p.pair.split(' + ')[1] || '...'}</td>
-                                    <td>
-                                        <span style={{ color: p.conf >= 50 ? '#10b981' : '#f59e0b', fontWeight: 700, background: (p.conf >= 50 ? '#10b981' : '#f59e0b') + '15', padding: '2px 8px', borderRadius: '4px' }}>
-                                            {p.conf}%
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <button onClick={() => setProofModal(p)} style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 600 }}>
-                                            View Proof
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                            {noData && <tr><td colSpan="4" style={{ textAlign: 'center', padding: '60px', color: '#334155' }}>
-                                <i className="fas fa-search" style={{ fontSize: '24px', display: 'block', marginBottom: '10px' }}></i>
-                                No associations discovered yet. Upload data to begin.
-                            </td></tr>}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            {/* ── Proof Modal ── */}
-            {proofModal && (
-                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', backdropFilter: 'blur(4px)' }}>
-                    <div className="db-card" style={{ maxWidth: '640px', width: '100%', animation: 'fadeIn 0.2s', padding: '32px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px', alignItems: 'center' }}>
-                            <h4 style={{ margin: 0, color: '#f8fafc' }}>
-                                <i className="fas fa-check-double" style={{ color: '#10b981', marginRight: '10px' }}></i>
-                                Association Evidence
-                            </h4>
-                            <button onClick={() => setProofModal(null)} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: '#94a3b8', cursor: 'pointer', width: '32px', height: '32px', borderRadius: '50%' }}>✕</button>
-                        </div>
-                        <p style={{ fontSize: '15px', color: '#94a3b8', lineHeight: '1.6', marginBottom: '20px' }}>
-                            The pattern <strong>{proofModal.pair}</strong> was found in <strong>{proofModal.count}</strong> transactions.
-                            Below are samples from your raw data providing proof of this association.
-                        </p>
-                        <div style={{ background: 'rgba(0,0,0,0.3)', padding: '20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                            <div style={{ fontSize: '11px', color: '#475569', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '1px' }}>Raw Transaction Samples:</div>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                {proofModal.samples?.map((s, i) => (
-                                    <div key={i} style={{ fontSize: '13px', padding: '10px 14px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', color: '#cbd5e1', border: '1px solid rgba(255,255,255,0.03)' }}>
-                                        <i className="fas fa-tag" style={{ marginRight: '10px', color: '#10b981', fontSize: '10px' }}></i>
-                                        {s.items.join(', ')}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                        <button onClick={() => setProofModal(null)} className="primary-btn" style={{ marginTop: '24px', padding: '12px' }}>Dismiss Evidence</button>
-                    </div>
-                </div>
-            )}
-
-            {/* ── Pattern Drill-down Modal ── */}
-            {itemsetModal && (
-                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', zIndex: 1001, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', backdropFilter: 'blur(8px)' }}>
-                    <div className="db-card" style={{ maxWidth: '800px', width: '100%', maxHeight: '80vh', display: 'flex', flexDirection: 'column', padding: 0 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '24px 32px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                            <div>
-                                <h4 style={{ margin: 0, color: '#f1f5f9' }}>
-                                    <i className="fas fa-cubes" style={{ color: '#10b981', marginRight: '10px' }}></i>
-                                    {itemsetModal.size}-Itemset Patterns ({itemsetModal.patterns.length} found)
-                                </h4>
-                                <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#94a3b8' }}>Raw patterns discovered by {analysisMeta?.algorithmLabel || 'the engine'} at this complexity level.</p>
-                                <div style={{ marginTop: '12px', padding: '8px 12px', background: 'rgba(16,185,129,0.08)', borderRadius: '6px', border: '1px solid rgba(16,185,129,0.2)', display: 'inline-block' }}>
-                                    <span style={{ fontSize: '11px', color: '#10b981', fontWeight: 600 }}><i className="fas fa-info-circle" style={{ marginRight: '6px' }}></i>What is Support?</span>
-                                    <span style={{ fontSize: '11px', color: '#cbd5e1', marginLeft: '6px' }}>It indicates the percentage of all transactions that include this exact combination of items.</span>
+                    {Object.keys(itemsetBreakdown).length > 0 && (
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                            <div style={{ padding: '20px', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px dashed rgba(255,255,255,0.08)' }}>
+                                <div style={{ fontSize: '13px', fontWeight: 600, color: '#94a3b8', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <i className="fas fa-microscope" style={{ color: '#8b5cf6' }}></i>
+                                    Detailed Pattern Analysis
+                                </div>
+                                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                                    {Object.entries(itemsetBreakdown).map(([size, count]) => (
+                                        <div key={size} onClick={() => setItemsetModal({ size, patterns: itemsetDetails[size] || [] })} style={{ background: 'rgba(255,255,255,0.03)', padding: '10px 16px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.05)', cursor: 'pointer' }}>
+                                            <div style={{ fontSize: '10px', color: '#64748b', textTransform: 'uppercase' }}>{size} Items Together</div>
+                                            <div style={{ fontSize: '14px', fontWeight: 800, color: '#10b981' }}>{count} groups</div>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
-                            <button onClick={() => setItemsetModal(null)} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: '#94a3b8', cursor: 'pointer', width: '32px', height: '32px', borderRadius: '50%', fontSize: '16px' }}>✕</button>
+
+                            <div style={{ padding: '20px', background: 'rgba(16,185,129,0.02)', borderRadius: '16px', border: '1px solid rgba(16,185,129,0.1)' }}>
+                                <div style={{ fontSize: '13px', fontWeight: 600, color: '#10b981', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <i className="fas fa-shield-alt"></i>
+                                    Proof of Origin (Source Integrity)
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                    <div style={{ fontSize: '12px', color: '#cbd5e1', display: 'flex', justifyContent: 'space-between' }}>
+                                        <span style={{ color: '#64748b' }}>Detected Transaction Column:</span>
+                                        <span style={{ fontWeight: 700, color: '#10b981' }}>"{dataMapping?.tx || 'Unknown'}"</span>
+                                    </div>
+                                    <div style={{ fontSize: '12px', color: '#cbd5e1', display: 'flex', justifyContent: 'space-between' }}>
+                                        <span style={{ color: '#64748b' }}>Detected Product Column:</span>
+                                        <span style={{ fontWeight: 700, color: '#10b981' }}>"{dataMapping?.prod || 'Unknown'}"</span>
+                                    </div>
+                                    <div style={{ fontSize: '12px', color: '#cbd5e1', display: 'flex', justifyContent: 'space-between' }}>
+                                        <span style={{ color: '#64748b' }}>Data Rows Processed:</span>
+                                        <span style={{ fontWeight: 700 }}>{parseInfo?.txCount || '0'} rows</span>
+                                    </div>
+                                    <div style={{ fontSize: '10px', color: '#475569', marginTop: '4px', fontStyle: 'italic' }}>
+                                        * This analysis is derived strictly from the file you provided. No external or random data was used.
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        
-                        <div className="scrollable-table-container" style={{ flex: 1, maxHeight: 'none', border: 'none', borderRadius: 0, padding: '24px 32px' }}>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '12px' }}>
-                                {itemsetModal.patterns.map((p, i) => (
-                                    <div key={i} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', padding: '12px 16px', borderRadius: '10px' }}>
-                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '8px' }}>
-                                            {p.items.map((item, ii) => (
-                                                <span key={ii} style={{ fontSize: '11px', background: 'rgba(16,185,129,0.12)', color: '#10b981', padding: '3px 8px', borderRadius: '4px', fontWeight: 600 }}>
-                                                    {item}
-                                                </span>
-                                            ))}
+                    )}
+                </div>
+            )}
+
+            {/* ── MODALS (Sale Evidence & Patterns) ── */}
+            {proofModal && (
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', backdropFilter: 'blur(4px)' }}>
+                    <div className="db-card" style={{ maxWidth: '600px', width: '100%', maxHeight: '90vh', padding: '0', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                        <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(16,185,129,0.08)', flexShrink: 0 }}>
+                            <h4 style={{ margin: 0, color: '#f8fafc', fontSize: '18px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <i className="fas fa-receipt" style={{ color: '#10b981' }}></i>
+                                Sale Evidence
+                            </h4>
+                            <button onClick={() => setProofModal(null)} style={{ background: 'transparent', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: '24px', padding: '0 5px' }}>✕</button>
+                        </div>
+                        <div style={{ padding: '32px', overflowY: 'auto', flex: 1, scrollbarWidth: 'thin' }}>
+                            <div style={{ marginBottom: '24px' }}>
+                                <div style={{ fontSize: '12px', color: '#64748b', textTransform: 'uppercase', fontWeight: 800, marginBottom: '8px' }}>The Relationship:</div>
+                                <div style={{ fontSize: '20px', fontWeight: 800, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                                    <span style={{ color: '#10b981' }}>{proofModal.pair.split(' + ')[0]}</span>
+                                    <i className="fas fa-long-arrow-alt-right" style={{ color: '#475569' }}></i>
+                                    <span style={{ color: '#10b981' }}>{proofModal.pair.split(' + ')[1]}</span>
+                                </div>
+                            </div>
+                            
+                            <p style={{ fontSize: '14px', color: '#94a3b8', lineHeight: '1.6', marginBottom: '24px' }}>
+                                This suggestion is not random. Our algorithm discovered this specific pairing in <strong>{proofModal.count}</strong> unique sales records within your uploaded file.
+                            </p>
+
+                            <div style={{ background: 'rgba(0,0,0,0.3)', padding: '20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '24px' }}>
+                                <div style={{ fontSize: '11px', color: '#475569', marginBottom: '16px', fontWeight: 800, letterSpacing: '1px' }}>RAW EVIDENCE SAMPLES FROM FILE {proofModal.count > 100 ? '(SHOWING FIRST 100)' : ''}:</div>
+                                <div className="visible-scrollbar" style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '150px', paddingRight: '12px', overflowY: 'scroll', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', padding: '8px' }}>
+                                    {proofModal.samples?.map((s, i) => (
+                                        <div key={i} style={{ fontSize: '13px', color: '#cbd5e1', padding: '10px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', borderLeft: '3px solid #3b82f6' }}>
+                                            <div style={{ fontSize: '10px', color: '#475569', marginBottom: '4px' }}>Transaction Sample #{i + 1}</div>
+                                            {s.items.join(', ')}
                                         </div>
-                                        <div style={{ fontSize: '10px', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Support: {(p.support * 100).toFixed(2)}%</div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div style={{ padding: '20px', background: 'rgba(59,130,246,0.05)', borderRadius: '12px', border: '1px solid rgba(59,130,246,0.1)' }}>
+                                <div style={{ fontSize: '11px', color: '#3b82f6', fontWeight: 800, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>How We Found This Pattern:</div>
+                                <p style={{ fontSize: '13px', color: '#94a3b8', margin: 0, lineHeight: '1.5' }}>
+                                    Our system scanned every single sale in your file. We found that in <strong>{proofModal.conf}%</strong> of cases, customers who bought the first item also picked up the second one. This is a real trend in your store, not a random guess!
+                                </p>
+                            </div>
+                        </div>
+                        <div style={{ padding: '20px 32px', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'flex-end', background: 'rgba(0,0,0,0.1)', flexShrink: 0 }}>
+                            <button onClick={() => setProofModal(null)} className="primary-btn" style={{ width: 'auto', padding: '10px 32px' }}>Got it, Thanks!</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {itemsetModal && (
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', zIndex: 1001, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', backdropFilter: 'blur(8px)' }}>
+                    <div className="db-card" style={{ maxWidth: '800px', width: '100%', maxHeight: '80vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', padding: 0 }}>
+                        <div style={{ padding: '24px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between' }}>
+                            <h4 style={{ margin: 0, color: '#f1f5f9' }}>{itemsetModal.size} Items Together</h4>
+                            <button onClick={() => setItemsetModal(null)} style={{ background: 'transparent', border: 'none', color: '#64748b', cursor: 'pointer' }}>✕</button>
+                        </div>
+                        <div style={{ padding: '24px', overflowY: 'auto', flex: 1 }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px' }}>
+                                {itemsetModal.patterns.map((p, i) => (
+                                    <div key={i} style={{ background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '10px' }}>
+                                        <div style={{ fontSize: '12px', color: '#10b981', fontWeight: 700, marginBottom: '6px' }}>{p.items.join(', ')}</div>
+                                        <div style={{ fontSize: '10px', color: '#475569' }}>Popularity: {(p.support * 100).toFixed(2)}%</div>
                                     </div>
                                 ))}
                             </div>
-                        </div>
-
-                        <div style={{ padding: '16px 32px', background: 'rgba(0,0,0,0.2)', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontSize: '12px', color: '#475569' }}>Showing all {itemsetModal.patterns.length} patterns for {itemsetModal.size}-itemset group</span>
-                            <button className="primary-btn" onClick={() => setItemsetModal(null)} style={{ width: 'auto', padding: '8px 20px' }}>Close</button>
                         </div>
                     </div>
                 </div>

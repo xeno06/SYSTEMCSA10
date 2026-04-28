@@ -176,6 +176,7 @@
 
 /* ---- Generic Card ---- */
 .db-card {
+    position: relative;
     background: var(--card-bg);
     border: 1px solid var(--border-color);
     border-radius: 14px;
@@ -350,6 +351,34 @@
     background-clip: padding-box;
 }
 
+/* ---- Visible Scrollbar Utility ---- */
+.visible-scrollbar {
+    overflow-y: scroll !important;
+    scrollbar-width: thin;
+    scrollbar-color: #10b981 rgba(255, 255, 255, 0.05);
+}
+
+.visible-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    display: block;
+}
+
+.visible-scrollbar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+}
+
+.visible-scrollbar::-webkit-scrollbar-thumb {
+    background: #10b981;
+    border-radius: 10px;
+    border: 2px solid #0b1120;
+    box-shadow: 0 0 5px rgba(16, 185, 129, 0.5);
+}
+
+.visible-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #059669;
+}
+
 /* ---- Clickable Proof Boxes ---- */
 .proof-box-hover:hover {
     background: rgba(16, 185, 129, 0.08) !important;
@@ -428,6 +457,8 @@
 }
 
 .sidebar {
+    position: relative;
+    z-index: 200;
     width: 220px;
     background: var(--bg-sidebar);
     border-right: 1px solid var(--border-color);
